@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="image">
+    <file>camera.jpg</file>
+    <file>gallery.jpg</file>
+    <file>settings.jpg</file>
+    <file>help.jpg</file>
+    <file>exit.jpg</file>
+    <file>logo.jpg</file>
+    <file>home.jpg</file>
+    <file>logo.png</file>
+  </qresource>
+</RCC>
