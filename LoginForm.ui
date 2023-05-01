@@ -6,20 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>625</width>
-    <height>565</height>
+    <width>929</width>
+    <height>718</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>iSecure</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>logo.jpg</normaloff>logo.jpg</iconset>
   </property>
   <widget class="QWidget" name="widget" native="true">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>30</y>
-     <width>550</width>
-     <height>500</height>
+     <width>791</width>
+     <height>621</height>
     </rect>
    </property>
    <widget class="QLabel" name="label">
@@ -27,8 +31,8 @@
      <rect>
       <x>40</x>
       <y>30</y>
-      <width>280</width>
-      <height>430</height>
+      <width>361</width>
+      <height>561</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -42,10 +46,10 @@ border-top-left-radius: 50px;</string>
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>400</x>
       <y>30</y>
-      <width>240</width>
-      <height>430</height>
+      <width>341</width>
+      <height>561</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -59,10 +63,10 @@ border-bottom-right-radius: 50px;</string>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>120</y>
-      <width>261</width>
-      <height>251</height>
+      <x>50</x>
+      <y>150</y>
+      <width>371</width>
+      <height>351</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -76,10 +80,10 @@ border-top-left-radius: 50px;</string>
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>335</x>
-      <y>110</y>
-      <width>111</width>
-      <height>40</height>
+      <x>510</x>
+      <y>170</y>
+      <width>141</width>
+      <height>51</height>
      </rect>
     </property>
     <property name="font">
@@ -99,10 +103,10 @@ border-top-left-radius: 50px;</string>
    <widget class="QLineEdit" name="lineEdit">
     <property name="geometry">
      <rect>
-      <x>295</x>
-      <y>175</y>
-      <width>190</width>
-      <height>40</height>
+      <x>460</x>
+      <y>250</y>
+      <width>225</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -111,7 +115,7 @@ border: none;
 border-bottom: 2px solid rgba(255,255,255,200);
 color: rgba(255,255,255,240);
 padding-bottom: 7px;
-</string>
+text-color: white;</string>
     </property>
     <property name="placeholderText">
      <string>Username</string>
@@ -120,9 +124,9 @@ padding-bottom: 7px;
    <widget class="QLineEdit" name="lineEdit_2">
     <property name="geometry">
      <rect>
-      <x>295</x>
-      <y>250</y>
-      <width>190</width>
+      <x>460</x>
+      <y>330</y>
+      <width>225</width>
       <height>40</height>
      </rect>
     </property>
@@ -132,7 +136,7 @@ border: none;
 border-bottom: 2px solid rgba(255,255,255,200);
 color: rgba(255,255,255,240);
 padding-bottom: 7px;
-</string>
+text-color: white;</string>
     </property>
     <property name="placeholderText">
      <string>Password</string>
@@ -141,8 +145,8 @@ padding-bottom: 7px;
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>325</y>
+      <x>480</x>
+      <y>420</y>
       <width>180</width>
       <height>35</height>
      </rect>
@@ -178,8 +182,8 @@ QPushButton#pushButton:pressed {
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>40</y>
+      <x>700</x>
+      <y>50</y>
       <width>29</width>
       <height>28</height>
      </rect>
