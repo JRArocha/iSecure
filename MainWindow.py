@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5 import QtCore
-from WindowGUI2 import Ui_MainWindow
 from pickle import TRUE
 import numpy as np
 import os
@@ -42,17 +41,17 @@ class Ui_MainWindow(object):
 
 
         # HOME TAB
+
+        # Home Camera Start
+        self.HomeCamera = HomeCamera()
+        self.HomeCamera.start()
+        self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
+
         self.Home = QWidget()
         self.Home.setStyleSheet("background-color: rgb(47, 47, 47);\n"
 "")
         self.Home.setObjectName("Home")
         self.labelHome = QLabel(self.Home)
-
-        self.HomeCamera = HomeCamera()
-        self.HomeCamera.start()
-        self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
-        
-
         self.labelHome.setGeometry(QtCore.QRect(40, 50, 1291, 601))
         self.labelHome.setStyleSheet("color: white;\n"
 "font-size: 100px;\n"
@@ -68,6 +67,12 @@ class Ui_MainWindow(object):
 
 
         # CAMERA TAB
+
+        self.CameraFeed = Detection()
+        self.CameraFeed.start()
+        self.CameraFeed.detectionUpdate.connect(self.ImageUpdateSlot)
+
+
         self.Camera = QWidget()
         self.Camera.setStyleSheet("color: rgb(0, 0, 0);")
         self.Camera.setObjectName("Camera")
@@ -435,7 +440,8 @@ class Ui_MainWindow(object):
 
 
     def ImageUpdateSlot(self, Image):
-        self.labelHome.setPixmap(QPixmap.fromImage(Image))
+        # self.labelHome.setPixmap(QPixmap.fromImage(Image))
+
         self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
 
     def CancelFeed(self):
@@ -460,12 +466,14 @@ class HomeCamera(QThread):
     
 # new trial
 class Detection(QThread):
-    def detect():
+    detectionUpdate = pyqtSignal(QImage)
+    def run(self):
         seconds_to_record_after_detection = 5
 
         # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY" # CJ API
         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
+        self.ThreadActive = True
         cap = cv2.VideoCapture(0)
 
         pb = PushBullet(API_KEY)
@@ -506,77 +514,85 @@ class Detection(QThread):
         while True:
                 ret, frame = cap.read()
 
-                # time when we finish processing for this frame
-                new_frame_time = time.time()
+                if ret:
+                        FlippedImage = cv2.flip(frame, 1)
 
-                # Calculating the fps
+                        # time when we finish processing for this frame
+                        new_frame_time = time.time()
 
-                fps = 1/(new_frame_time-prev_frame_time)
-                prev_frame_time = new_frame_time
+                        # Calculating the fps
 
-                # converting the fps into integer
-                fps = int(fps)
+                        fps = 1/(new_frame_time-prev_frame_time)
+                        prev_frame_time = new_frame_time
 
-                # converting the fps to string so that we can display it on frame
-                # by using putText function
-                fps = str(fps)
+                        # converting the fps into integer
+                        fps = int(fps)
 
-                # putting the FPS count on the frame
-                cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 2, cv2.LINE_AA)
+                        # converting the fps to string so that we can display it on frame
+                        # by using putText function
+                        fps = str(fps)
 
-                class_id = None
+                        # putting the FPS count on the frame
+                        cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 2, cv2.LINE_AA)
+                        
 
-                (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
-                for class_id, score, bbox in zip(class_ids, scores, bboxes):
-                        (x, y, w, h) = bbox
-                        class_name = classes[class_id]
-                #if human is detected then draw a bounding box
-                if class_id == 0:
-                        cv2.putText(frame, class_name.upper(), (x, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
-                        cv2.putText(frame,str(round(score*100,2))+'%',(x + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
-                        print(class_name)
-                        class_id = 1
-                        if detection:
-                                timer_started = False
-                        else:
-                                detection = True
-                                current_time = datetime.datetime.now().strftime("%b-%m-%Y-%H-%M-%S")
-                                detect_time = datetime.datetime.now().strftime("%I:%M %p")
-                                rec = cv2.VideoWriter(
-                                f"{current_time}.mp4", fourcc, 20, frame_size)
-                                print("Started Recording!")
-                                #push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
-                                # #send notification
-                                # with open("snapshot-{detect_time}.jpg", "rb") as pic:
-                                #     file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
-                                #     push = pb.push_file(**file_data)
-                        #---------------------end of human detection --------------------
-                                
-                        #Records and save video into mp4 file when there is a detection               
-                elif detection:
-                        print(class_id)
-                        print(score)
-                        print(detection)
-                        if timer_started:
-                                print(time.time(),detection_stopped_time, SECONDS_TO_RECORD_AFTER_DETECTION)
-                                if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
-                                        detection = False
+                        class_id = None
+
+                        (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
+                        for class_id, score, bbox in zip(class_ids, scores, bboxes):
+                                (x, y, w, h) = bbox
+                                class_name = classes[class_id]
+                        #if human is detected then draw a bounding box
+                        if class_id == 0:
+                                cv2.putText(frame, class_name.upper(), (x, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
+                                cv2.putText(frame,str(round(score*100,2))+'%',(x + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                                print(class_name)
+                                class_id = 1
+                                if detection:
                                         timer_started = False
-                                        rec.release()
-                                        print('Stop Recording!')
-                                        #Send video to user
-                                        # with open(f"{current_time}.mp4", "rb") as vid:
-                                        #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
+                                else:
+                                        detection = True
+                                        current_time = datetime.datetime.now().strftime("%b-%m-%Y-%H-%M-%S")
+                                        detect_time = datetime.datetime.now().strftime("%I:%M %p")
+                                        rec = cv2.VideoWriter(
+                                        f"{current_time}.mp4", fourcc, 20, frame_size)
+                                        print("Started Recording!")
+                                        #push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
+                                        # #send notification
+                                        # with open("snapshot-{detect_time}.jpg", "rb") as pic:
+                                        #     file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
+                                        #     push = pb.push_file(**file_data)
+                                #---------------------end of human detection --------------------
+                                        
+                                #Records and save video into mp4 file when there is a detection               
+                        elif detection:
+                                print(class_id)
+                                print(score)
+                                print(detection)
+                                if timer_started:
+                                        print(time.time(),detection_stopped_time, SECONDS_TO_RECORD_AFTER_DETECTION)
+                                        if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
+                                                detection = False
+                                                timer_started = False
+                                                rec.release()
+                                                print('Stop Recording!')
+                                                #Send video to user
+                                                # with open(f"{current_time}.mp4", "rb") as vid:
+                                                #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
 
-                                        # push = pb.push_file(**file_data)
-                
-                        else:
-                                timer_started = True
-                                detection_stopped_time = time.time()
-                if detection:
-                        rec.write(frame)
-                        #------------------end of recording----------------------------------------
+                                                # push = pb.push_file(**file_data)
+                        
+                                else:
+                                        timer_started = True
+                                        detection_stopped_time = time.time()
+                        if detection:
+                                rec.write(frame)
+      
+                                #------------------end of recording----------------------------------------
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
 
 
 if __name__ == "__main__":
