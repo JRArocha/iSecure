@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from WindowGUI2 import Ui_MainWindow
 import sys, res
+import cv2
 
 
 class Ui_MainWindow(object):
@@ -174,7 +175,7 @@ class Ui_MainWindow(object):
         self.widget_4.setGeometry(QtCore.QRect(20, 20, 1331, 661))
         self.widget_4.setObjectName("widget_4")
         self.layoutWidget = QtWidgets.QWidget(self.widget_4)
-        self.layoutWidget.setGeometry(QtCore.QRect(10, 350, 1291, 261))
+        self.layoutWidget.setGeometry(QtCore.QRect(20, 350, 1271, 261))
         self.layoutWidget.setObjectName("layoutWidget")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.layoutWidget)
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -416,7 +417,6 @@ class Ui_MainWindow(object):
         self.labelHelp.setText(_translate("MainWindow", "Video Tutorial"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Help), _translate("MainWindow", "Help"))
         self.btnMainExit.setText(_translate("MainWindow", "Exit"))
-
 
 if __name__ == "__main__":
     import sys
