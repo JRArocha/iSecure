@@ -9,9 +9,24 @@ import time
 import datetime
 from pushbullet import PushBullet
 import sys, res
-import cv2,imutils
+import cv2
 
 vid = cv2.VideoCapture(0)
+
+
+# Opencv DNN
+net = cv2.dnn.readNet("dnn_model/yolov4-tiny.weights", "dnn_model/yolov4-tiny.cfg")
+# net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+# net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+model = cv2.dnn_DetectionModel(net)
+model.setInputParams(size=(320, 320), scale=1/255)
+
+# Load class lists
+classes = []
+with open("dnn_model/classes.txt", "r") as file_object:
+    for class_name in file_object.readlines():
+        class_name = class_name.strip()
+        classes.append(class_name)
 
 
 class Ui_MainWindow(object):
@@ -479,7 +494,7 @@ class Ui_MainWindow(object):
         self.btnStop.setEnabled(False)
         self.CamStart.stop()
 
-        self.HomeCamera =Detection()
+        self.HomeCamera =HomeCamera()
         self.HomeCamera.start()
         self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
         
@@ -504,15 +519,22 @@ class HomeCamera(QThread):
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
-        cnt=0
-        frames_to_count=20
-        st = 0
-        fps=0
+
+        API_KEY = "o.zex5Q7k2690hvILhBQugycKEAPKsqGsT"
+
+        pb = PushBullet(API_KEY)
+
+        frame_size = (int(vid.get(3)), int(vid.get(4)))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+        
         detection = False
         detection_stopped_time = None
         timer_started = False
         SECONDS_TO_RECORD_AFTER_DETECTION = 5
+
         self.ThreadActive = True
+
         while self.ThreadActive:
             QtWidgets.QApplication.processEvents()
             ret, frame = vid.read()
@@ -523,25 +545,6 @@ class Detection(QThread):
                 Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(Pic)
 
-                API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY"
-
-                pb = PushBullet(API_KEY)
-
-                detect = 0
-                # Opencv DNN
-                net = cv2.dnn.readNet("dnn_model/yolov4-tiny.weights", "dnn_model/yolov4-tiny.cfg")
-                # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-                # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-                model = cv2.dnn_DetectionModel(net)
-                model.setInputParams(size=(320, 320), scale=1/255)
-
-                # Load class lists
-                classes = []
-                with open("dnn_model/classes.txt", "r") as file_object:
-                    for class_name in file_object.readlines():
-                        class_name = class_name.strip()
-                        classes.append(class_name)
-                
                 try:
                     class_id = None
                     (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
@@ -557,26 +560,26 @@ class Detection(QThread):
                             timer_started = False
                         else:
                             detection = True
-                            current_time = datetime.datetime.now().strftime("%b-%m-%Y-%H-%M-%S")
+                            current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
                             cv2.imwrite(img_name, frame)
-                            print("{} written!".format(img_name))
-                            print("Started Recording!")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             #send notification
                             with open(img_name, "rb") as pic:
                                 file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
                                 push = pb.push_file(**file_data)
-                        #---------------------end of human detection --------------------
+                            print("{} written!".format(img_name))
+                            rec = cv2.VideoWriter(
+                                f"{current_time}.mp4", fourcc, 15, frame_size)
+                            print("Started Recording!")
                             
-                    #Records and save video into mp4 file when there is a detection               
+                            # #---------------------end of human detection --------------------
+                        
+                #Records and save video into mp4 file when there is a detection               
                     elif detection:
-                        print(class_id)
-                        print(score)
-                        print(detection)
                         if timer_started:
-                            print(time.time(),detection_stopped_time, SECONDS_TO_RECORD_AFTER_DETECTION)
+                            print(int(SECONDS_TO_RECORD_AFTER_DETECTION - (time.time() - detection_stopped_time)))
                             if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
                                 detection = False
                                 timer_started = False
@@ -591,22 +594,16 @@ class Detection(QThread):
                         else:
                             timer_started = True
                             detection_stopped_time = time.time()
+
                     if detection:
-                        img_name.write(frame)
+                        rec.write(frame)
+                #------------------end of recording----------------------------------------
+
                 except Exception as e:
                     pass
                 
-                if cnt == frames_to_count:
-                    try: # To avoid divide by 0 we put it in try except
-                        print(frames_to_count/(time.time()-st),'FPS') 
-                        self.fps = round(frames_to_count/(time.time()-st)) 
-                        
-                        
-                        st = time.time()
-                        cnt=0
-                    except:
-                        pass
     def stop(self):
+
         self.ThreadActive = False
         self.quit()
 
