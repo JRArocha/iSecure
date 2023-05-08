@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from MainWindow import Ui_MainWindow
 import sys, res
+from time import sleep
 
 class Ui_Form(object):
     def openWindow(self):
@@ -40,6 +41,9 @@ class Ui_Form(object):
 "border-top-left-radius: 50px;")
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
+
+
+
         self.label_4 = QLabel(self.widget)
         self.label_4.setGeometry(QRect(510, 170, 141, 51))
         font = QFont()
@@ -49,6 +53,8 @@ class Ui_Form(object):
         self.label_4.setFont(font)
         self.label_4.setStyleSheet("color: rgb(255, 255, 255);")
         self.label_4.setObjectName("label_4")
+
+
         self.lineEdit = QLineEdit(self.widget)
         self.lineEdit.setGeometry(QRect(460, 250, 225, 50))
         self.lineEdit.setStyleSheet("background-color: rgba(0,0,0,0);\n"
@@ -58,6 +64,8 @@ class Ui_Form(object):
 "padding-bottom: 7px;\n"
 "text-color: white;")
         self.lineEdit.setObjectName("lineEdit")
+
+
         self.lineEdit_2 = QLineEdit(self.widget)
         self.lineEdit_2.setEchoMode(QLineEdit.Password)
         self.lineEdit_2.setGeometry(QRect(460, 330, 225, 40))
@@ -135,32 +143,45 @@ class Ui_Form(object):
         password = self.lineEdit_2.text()
         counter = 0
 
-        while str(username)!= "admin" and str(password)!= "admin" and counter < 3:
-                username = self.lineEdit.text()
-                password = self.lineEdit_2.text()
+        
+        
 
-                if str(username)== "admin" and str(password)== "admin":
-                        self.window = QMainWindow()
-                        self.ui = Ui_MainWindow()
-                        self.ui.setupUi(self.window)
-                        self.window.show()
+        if str(username)== "admin" and str(password)== "admin":
+                self.window = QMainWindow()
+                self.ui = Ui_MainWindow()
+                self.ui.setupUi(self.window)
+                self.window.show()
+
+                
+        # elif str(username)== "" or str(password)== "":
+        #         counter += 1
+        #         Form = QWidget()
+        #         ui = Ui_Form()
+        #         ui.setupUi(Form)
+        #         Form.show()
+                
+        else:   
+                
+                Form = QWidget()
+                ui = Ui_Form()
+                ui.setupUi(Form)
+                Form.show()
                         
 
-                elif str(username)== "" or str(password)== "":
-                        counter += 1
-                        error_dialog = QMessageBox()
-                        error_dialog.setWindowTitle("Error")
-                        error_dialog.setText("Input Required... Attempt" + str(counter) + "/3")
-                        error_dialog.exec()
 
-                else:   
-                        counter += 1
-                        if counter == 3:
-                                Form.close()
-             
-            
-            
 
+                #         if counter == 3:
+                #                 error_dialog = QMessageBox()
+                #                 error_dialog.setWindowTitle("Error")
+                #                 error_dialog.setText("System Locked... Attempt" + str(counter) + "/3")
+                #                 error_dialog.exec()
+                        
+                #         else:
+                #                 Form = QWidget()
+                #                 ui = Ui_Form()
+                #                 ui.setupUi(Form)
+                #                 Form.show()
+                                
 
     def retranslateUi(self, Form):
         _translate = QCoreApplication.translate

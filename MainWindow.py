@@ -67,11 +67,6 @@ class Ui_MainWindow(object):
 
         # CAMERA TAB
 
-        # self.CameraFeed = Detection()
-        # self.CameraFeed.start()
-        # self.CameraFeed.detectionUpdate.connect(self.ImageUpdateSlot)
-
-
         self.Camera = QWidget()
         self.Camera.setStyleSheet("color: rgb(0, 0, 0);")
         self.Camera.setObjectName("Camera")
@@ -87,12 +82,21 @@ class Ui_MainWindow(object):
         self.labelCameraFeed.setLineWidth(4)
         self.labelCameraFeed.setAlignment(Qt.AlignCenter)
         self.labelCameraFeed.setObjectName("labelCameraFeed")
+
         self.btnStart = QPushButton(self.widget_3)
+        self.btnStart.setEnabled(True)
+        self.btnStart.clicked.connect(self.CameraStart)
+
         self.btnStart.setGeometry(QRect(290, 20, 101, 31))
         self.btnStart.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
         self.btnStart.setObjectName("btnStart")
+
+
         self.btnStop = QPushButton(self.widget_3)
+        self.btnStop.setEnabled(False)
+        self.btnStop.clicked.connect(self.CancelFeed)
+
         self.btnStop.setGeometry(QRect(400, 20, 101, 31))
         self.btnStop.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -145,6 +149,11 @@ class Ui_MainWindow(object):
         self.comboDetection.addItem("")
         self.comboDetection.addItem("")
         self.apiKey = QLineEdit(self.widget_2)
+
+
+        self.apiKey.text()
+
+
         self.apiKey.setGeometry(QRect(150, 50, 321, 41))
         self.apiKey.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
@@ -440,11 +449,40 @@ class Ui_MainWindow(object):
 
     def ImageUpdateSlot(self, Image):
         self.labelHome.setPixmap(QPixmap.fromImage(Image))
+        self.labelHome.setScaledContents(True)
+        
 
-        # self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
+    def CameraStart(self):
+        self.btnStart.setEnabled(False)
+        self.btnStop.setEnabled(True)
+        self.CamStart = HomeCamera()
+        self.CamStart.start()
+        self.CamStart.ImageUpdate.connect(self.startCamera)
+        
+        
+    def startCamera(self, Image):
+        self.labelHome.setPixmap(QPixmap.fromImage(Image))
+        self.labelHome.setScaledContents(True)
+
+        self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
+        self.labelCameraFeed.setScaledContents(True)
+        
 
     def CancelFeed(self):
-        self.HomeCamera.stop()
+        self.labelCameraFeed.setPixmap(QPixmap("camera.jpg"))
+        self.labelCameraFeed.setScaledContents(True)
+        
+        self.btnStart.setEnabled(True)
+        self.btnStop.setEnabled(False)
+        self.CamStart.stop()
+
+        self.HomeCamera = HomeCamera()
+        self.HomeCamera.start()
+        self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
+        
+        
+        
+       
         
 class HomeCamera(QThread):
     ImageUpdate = pyqtSignal(QImage)
