@@ -429,7 +429,7 @@ class Ui_MainWindow(object):
         self.tutorialWidget.setGeometry(QRect(50, 60, 1271, 531))
         self.tutorialWidget.setObjectName("tutorialWidget")
         
-        # Video Player
+        # Video 
         videoWidget = QVideoWidget(self.tutorialWidget)
         
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
