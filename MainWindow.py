@@ -1,6 +1,9 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimediaWidgets import QVideoWidget
 from pickle import TRUE
 import numpy as np
 import os
@@ -9,6 +12,23 @@ import datetime
 from pushbullet import PushBullet
 import sys, res
 import cv2
+
+vid = cv2.VideoCapture(0)
+
+
+# Opencv DNN
+net = cv2.dnn.readNet("dnn_model/yolov4-tiny.weights", "dnn_model/yolov4-tiny.cfg")
+# net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+# net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+model = cv2.dnn_DetectionModel(net)
+model.setInputParams(size=(320, 320), scale=1/255)
+
+# Load class lists
+classes = []
+with open("dnn_model/classes.txt", "r") as file_object:
+    for class_name in file_object.readlines():
+        class_name = class_name.strip()
+        classes.append(class_name)
 
 
 class Ui_MainWindow(object):
@@ -102,12 +122,12 @@ class Ui_MainWindow(object):
 "font-size: 18px")
         self.btnStop.setObjectName("btnStop")
         self.selectCamera = QComboBox(self.widget_3)
+        self.selectCamera.addItem("Camera 1")
+        self.selectCamera.addItem("Camera 2")
+        self.selectCamera.setObjectName(u"selectCamera")
         self.selectCamera.setGeometry(QRect(10, 20, 261, 31))
-        self.selectCamera.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+        self.selectCamera.setStyleSheet(u"background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
-        self.selectCamera.setPlaceholderText("")
-        self.selectCamera.setObjectName("selectCamera")
-        self.selectCamera.addItem("")
         self.label_10 = QLabel(self.widget_3)
         self.label_10.setGeometry(QRect(10, 410, 491, 211))
         self.label_10.setFrameShape(QFrame.Box)
@@ -178,6 +198,12 @@ class Ui_MainWindow(object):
         self.label_9.setText("")
         self.label_9.setObjectName("label_9")
         self.label_9.raise_()
+        self.btnCamSave = QPushButton(self.widget_2)
+        self.btnCamSave.setGeometry(QRect(210, 260, 101, 31))
+        self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+"font-size: 18px")
+        self.btnCamSave.setObjectName("btnCamSave")
+        self.btnCamSave.raise_()
         self.apiKey.raise_()
         self.labelBoundingBox.raise_()
         self.labelDetection.raise_()
@@ -368,10 +394,14 @@ class Ui_MainWindow(object):
 
 
         # HELP TAB
+        
+
         self.Help = QWidget()
         self.Help.setObjectName("Help")
+        
+        # for video player
         self.labelHelp = QLabel(self.Help)
-        self.labelHelp.setGeometry(QRect(40, 50, 1291, 601))
+        self.labelHelp.setGeometry(QRect(40, 50, 1291, 551))
         self.labelHelp.setStyleSheet("color: white;\n"
 "font-size: 100px;")
         self.labelHelp.setFrameShape(QFrame.Box)
@@ -379,6 +409,36 @@ class Ui_MainWindow(object):
         self.labelHelp.setLineWidth(4)
         self.labelHelp.setAlignment(Qt.AlignCenter)
         self.labelHelp.setObjectName("labelHelp")
+        self.horizontalSlider = QSlider(self.Help)
+        self.horizontalSlider.setGeometry(QRect(160, 630, 1161, 31))
+        self.horizontalSlider.setOrientation(Qt.Horizontal)
+        self.horizontalSlider.setRange(0, 0)
+        self.horizontalSlider.sliderMoved.connect(self.setPosition)
+        self.horizontalSlider.setObjectName("horizontalSlider")
+        self.playButton = QPushButton(self.Help)
+        self.playButton.clicked.connect(self.videoTutorial)
+        self.playButton.setGeometry(QRect(50, 620, 91, 51))
+        self.playButton.setStyleSheet("border-radius: 15px;\n"
+"\n"
+"color: rgb(0, 0, 0);\n"
+"background-color: rgb(237, 237, 237);\n"
+"")
+        self.playButton.setObjectName("playButton")
+
+        self.tutorialWidget = QWidget(self.Help)
+        self.tutorialWidget.setGeometry(QRect(50, 60, 1271, 531))
+        self.tutorialWidget.setObjectName("tutorialWidget")
+        
+        # Video Player
+        videoWidget = QVideoWidget(self.tutorialWidget)
+        
+        self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
+        self.mediaPlayer.setVideoOutput(videoWidget)
+
+        self.mediaPlayer.positionChanged.connect(self.positionChanged)
+        self.mediaPlayer.durationChanged.connect(self.durationChanged)
+
         icon5 = QIcon()
         icon5.addPixmap(QPixmap("help.jpg"), QIcon.Normal, QIcon.On)
         self.tabWidget.addTab(self.Help, icon5, "")
@@ -414,7 +474,7 @@ class Ui_MainWindow(object):
         self.btnStart.setText(_translate("MainWindow", "Start"))
         self.btnStop.setText(_translate("MainWindow", "Stop"))
         self.selectCamera.setCurrentText(_translate("MainWindow", "Select Camera"))
-        self.selectCamera.setItemText(0, _translate("MainWindow", "Select Camera"))
+        self.selectCamera.setItemText(0, _translate("MainWindow", "Camera 1"))
         self.label_13.setText(_translate("MainWindow", "Counter"))
         self.comboBBox.setItemText(0, _translate("MainWindow", "On"))
         self.comboBBox.setItemText(1, _translate("MainWindow", "Off"))
@@ -423,6 +483,7 @@ class Ui_MainWindow(object):
         self.comboDetection.setItemText(1, _translate("MainWindow", "Off"))
         self.labelBoundingBox.setText(_translate("MainWindow", "Bounding Box"))
         self.labelDetection.setText(_translate("MainWindow", "Detection"))
+        self.btnCamSave.setText(_translate("MainWindow", "Save"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Camera), _translate("MainWindow", "Camera"))
         self.label_17.setText(_translate("MainWindow", "Video"))
         self.label_18.setText(_translate("MainWindow", "Video"))
@@ -443,6 +504,7 @@ class Ui_MainWindow(object):
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("MainWindow", "Security"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Settings), _translate("MainWindow", "Settings"))
         self.labelHelp.setText(_translate("MainWindow", "Video Tutorial"))
+        self.playButton.setText(_translate("MainWindow", "Play / Pause"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Help), _translate("MainWindow", "Help"))
         self.btnMainExit.setText(_translate("MainWindow", "Exit"))
 
@@ -455,7 +517,7 @@ class Ui_MainWindow(object):
     def CameraStart(self):
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
-        self.CamStart = HomeCamera()
+        self.CamStart = Detection()
         self.CamStart.start()
         self.CamStart.ImageUpdate.connect(self.startCamera)
         
@@ -479,18 +541,27 @@ class Ui_MainWindow(object):
         self.HomeCamera = HomeCamera()
         self.HomeCamera.start()
         self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
-        
-        
-        
-       
+
+    def videoTutorial(self):
+        self.mediaPlayer.play()
+
+    def positionChanged(self, position):
+        self.horizontalSlider.setValue(position)
+
+    def durationChanged(self, duration):
+        self.horizontalSlider.setRange(0, duration)
+
+    def setPosition(self, position):
+        self.mediaPlayer.setPosition(position)
+
+
         
 class HomeCamera(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
         self.ThreadActive = True
-        Capture = cv2.VideoCapture(0)
         while self.ThreadActive:
-            ret, frame = Capture.read()
+            ret, frame = vid.read()
             if ret:
                 Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 FlippedImage = cv2.flip(Image, 1)
@@ -499,137 +570,101 @@ class HomeCamera(QThread):
                 self.ImageUpdate.emit(Pic)
     def stop(self):
         self.ThreadActive = False
+        self.quit()  
+       
+        
+class Detection(QThread):
+    ImageUpdate = pyqtSignal(QImage)
+    def run(self):
+
+        # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY"   # CJ API
+        API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+
+        pb = PushBullet(API_KEY)
+
+        frame_size = (int(vid.get(3)), int(vid.get(4)))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+        
+        detection = False
+        detection_stopped_time = None
+        timer_started = False
+        SECONDS_TO_RECORD_AFTER_DETECTION = 5
+
+        self.ThreadActive = True
+
+        while self.ThreadActive:
+            QtWidgets.QApplication.processEvents()
+            ret, frame = vid.read()
+            if ret:
+                Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                FlippedImage = cv2.flip(Image, 1)
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
+                try:
+                    class_id = None
+                    (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
+                    for class_id, score, bbox in zip(class_ids, scores, bboxes):
+                        (x, y, w, h) = bbox
+                        class_name = classes[class_id]
+                    #if human is detected then draw a bounding box
+                    if class_id == 0:
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
+                        print(class_name)
+                        class_id = 1
+                        if detection:
+                            timer_started = False
+                        else:
+                            detection = True
+                            current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
+                            detect_time = datetime.datetime.now().strftime("%I:%M %p")
+                            img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+                            cv2.imwrite(img_name, frame)
+                            push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
+                            #send notification
+                            with open(img_name, "rb") as pic:
+                                file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
+                                push = pb.push_file(**file_data)
+                            print("{} written!".format(img_name))
+                            rec = cv2.VideoWriter(
+                                f"{current_time}.mp4", fourcc, 15, frame_size)
+                            print("Started Recording!")
+                            
+                            # #---------------------end of human detection --------------------
+                        
+                #Records and save video into mp4 file when there is a detection               
+                    elif detection:
+                        if timer_started:
+                            print(int(SECONDS_TO_RECORD_AFTER_DETECTION - (time.time() - detection_stopped_time)))
+                            if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
+                                detection = False
+                                timer_started = False
+                                rec.release()
+                                print('Stop Recording!')
+                                #Send video to user
+                                # with open(f"{current_time}.mp4", "rb") as vid:
+                                #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
+
+                                # push = pb.push_file(**file_data)
+                        
+                        else:
+                            timer_started = True
+                            detection_stopped_time = time.time()
+
+                    if detection:
+                        rec.write(frame)
+                #------------------end of recording----------------------------------------
+
+                except Exception as e:
+                    pass
+                
+    def stop(self):
+
+        self.ThreadActive = False
         self.quit()
-    
-# new trial
-# class Detection(QThread):
-#     detectionUpdate = pyqtSignal(QImage)
-#     def run(self):
-#         seconds_to_record_after_detection = 5
 
-#         # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY" # CJ API
-#         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
-
-#         self.ThreadActive = True
-#         cap = cv2.VideoCapture(0)
-
-#         pb = PushBullet(API_KEY)
-
-#         detect = 0
-
-#         # Opencv DNN
-#         net = cv2.dnn.readNet("dnn_model/yolov4-tiny.weights", "dnn_model/yolov4-tiny.cfg")
-#         # net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-#         # net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-#         model = cv2.dnn_DetectionModel(net)
-#         model.setInputParams(size=(320, 320), scale=1/255)
-
-
-#         # Load class lists
-#         classes = []
-#         with open("dnn_model/classes.txt", "r") as file_object:
-#                 for class_name in file_object.readlines():
-#                         class_name = class_name.strip()
-#                         classes.append(class_name)
-#         print(classes)
-
-#         detection = False
-#         detection_stopped_time = None
-#         timer_started = False
-#         SECONDS_TO_RECORD_AFTER_DETECTION = seconds_to_record_after_detection
-
-#         frame_size = (int(cap.get(3)), int(cap.get(4)))
-#         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
-
-#         # used to record the time when we processed last frame
-#         prev_frame_time = 0
-
-#         # used to record the time at which we processed current frame
-#         new_frame_time = 0
-
-#         while True:
-#                 ret, frame = cap.read()
-
-#                 if ret:
-#                         FlippedImage = cv2.flip(frame, 1)
-
-#                         # time when we finish processing for this frame
-#                         new_frame_time = time.time()
-
-#                         # Calculating the fps
-
-#                         fps = 1/(new_frame_time-prev_frame_time)
-#                         prev_frame_time = new_frame_time
-
-#                         # converting the fps into integer
-#                         fps = int(fps)
-
-#                         # converting the fps to string so that we can display it on frame
-#                         # by using putText function
-#                         fps = str(fps)
-
-#                         # putting the FPS count on the frame
-#                         cv2.putText(frame, fps, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 2, cv2.LINE_AA)
-                        
-
-#                         class_id = None
-
-#                         (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
-#                         for class_id, score, bbox in zip(class_ids, scores, bboxes):
-#                                 (x, y, w, h) = bbox
-#                                 class_name = classes[class_id]
-#                         #if human is detected then draw a bounding box
-#                         if class_id == 0:
-#                                 cv2.putText(frame, class_name.upper(), (x, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
-#                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
-#                                 cv2.putText(frame,str(round(score*100,2))+'%',(x + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
-#                                 print(class_name)
-#                                 class_id = 1
-#                                 if detection:
-#                                         timer_started = False
-#                                 else:
-#                                         detection = True
-#                                         current_time = datetime.datetime.now().strftime("%b-%m-%Y-%H-%M-%S")
-#                                         detect_time = datetime.datetime.now().strftime("%I:%M %p")
-#                                         rec = cv2.VideoWriter(
-#                                         f"{current_time}.mp4", fourcc, 20, frame_size)
-#                                         print("Started Recording!")
-#                                         #push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
-#                                         # #send notification
-#                                         # with open("snapshot-{detect_time}.jpg", "rb") as pic:
-#                                         #     file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
-#                                         #     push = pb.push_file(**file_data)
-#                                 #---------------------end of human detection --------------------
-                                        
-#                                 #Records and save video into mp4 file when there is a detection               
-#                         elif detection:
-#                                 print(class_id)
-#                                 print(score)
-#                                 print(detection)
-#                                 if timer_started:
-#                                         print(time.time(),detection_stopped_time, SECONDS_TO_RECORD_AFTER_DETECTION)
-#                                         if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
-#                                                 detection = False
-#                                                 timer_started = False
-#                                                 rec.release()
-#                                                 print('Stop Recording!')
-#                                                 #Send video to user
-#                                                 # with open(f"{current_time}.mp4", "rb") as vid:
-#                                                 #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
-
-#                                                 # push = pb.push_file(**file_data)
-                        
-#                                 else:
-#                                         timer_started = True
-#                                         detection_stopped_time = time.time()
-#                         if detection:
-#                                 rec.write(frame)
-      
-#                                 #------------------end of recording----------------------------------------
-#     def stop(self):
-#         self.ThreadActive = False
-#         self.quit()
 
 
 if __name__ == "__main__":
