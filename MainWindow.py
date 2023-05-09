@@ -12,12 +12,14 @@ import datetime
 from pushbullet import PushBullet
 import sys, res
 import cv2
+from threading import Thread
+import queue
 
 vid = cv2.VideoCapture(0)
-vid.set(cv2.CAP_PROP_FRAME_WIDTH, vid.get(cv2.CAP_PROP_FRAME_WIDTH))
-vid.set(cv2.CAP_PROP_FRAME_HEIGHT, vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-os.environ['QT_MULTIMEDIA_PREFERRED_PLUGINS'] = 'windowsmediafoundation'
+frame_queue = queue.Queue()
+
+video_name = None  
 
 
 # Opencv DNN
@@ -592,10 +594,10 @@ class Detection(QThread):
 
     def run(self):
 
-        # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY"   # CJ API
+        API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
         # #API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
-        # pb = PushBullet(API_KEY)
+        pb = PushBullet(API_KEY)
 
         frame_size = (int(vid.get(3)), int(vid.get(4)))
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -605,8 +607,36 @@ class Detection(QThread):
         detection_stopped_time = None
         timer_started = False
         SECONDS_TO_RECORD_AFTER_DETECTION = 5
+        
 
         self.ThreadActive = True
+
+        def send_notification():
+            while True:
+                # get the next frame from the queue
+                frame = frame_queue.get()
+                if os.path.exists(img_name):
+                    # upload the image file
+                    with open(img_name, "rb") as pic:
+                        file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
+                        push = pb.push_file(**file_data)
+                        print("Notification sent to user")
+
+                if video_name and os.path.exists(video_name):
+                    # upload the video file
+                    with open(video_name, "rb") as vid:
+                        file_data = pb.upload_file(vid, f"video-{detect_time}.mp4")
+                        push = pb.push_file(**file_data)
+                        print("Video sent to user")
+
+                # sleep for a short time before checking again
+                time.sleep(0.1)
+
+        # start the notification thread
+        notification_thread = Thread(target=send_notification)
+        notification_thread.start()
+
+        
 
         while self.ThreadActive:
             QtWidgets.QApplication.processEvents()
@@ -645,15 +675,11 @@ class Detection(QThread):
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
                             cv2.imwrite(img_name, frame)
                             print("Snapshot Taken")
-                            #push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
-                            #send notification
-                            # with open(img_name, "rb") as pic:
-                            #     file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
-                            #     push = pb.push_file(**file_data)
-                            # print("{} written!".format(img_name))
+                            push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             rec = cv2.VideoWriter(
                                 f"{current_time}.mp4", fourcc, 10, frame_size)
                             print("Started Recording!")
+                            frame_queue.put(FlippedImage)
                             
                             # #---------------------end of human detection --------------------
                         
@@ -667,11 +693,10 @@ class Detection(QThread):
                                 rec.release()
                                 print('Stop Recording!')
                                 #Send video to user
-                                # with open(f"{current_time}.mp4", "rb") as vid:
-                                #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
-
-                                # push = pb.push_file(**file_data)
-                        
+                                with open(f"{current_time}.mp4", "rb") as video:
+                                    file_data = pb.upload_file(video, f"{current_time}.mp4")
+                                push = pb.push_file(**file_data)
+                                
                         else:
                             timer_started = True
                             detection_stopped_time = time.time()
@@ -691,6 +716,8 @@ class Detection(QThread):
                 
     def stop(self):
 
+        self.ThreadActive = False
+        self.quit()
         self.ThreadActive = False
         self.quit()
 
