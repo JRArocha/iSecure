@@ -622,13 +622,6 @@ class Detection(QThread):
                         push = pb.push_file(**file_data)
                         print("Notification sent to user")
 
-                if video_name and os.path.exists(video_name):
-                    # upload the video file
-                    with open(video_name, "rb") as vid:
-                        file_data = pb.upload_file(vid, f"video-{detect_time}.mp4")
-                        push = pb.push_file(**file_data)
-                        print("Video sent to user")
-
                 # sleep for a short time before checking again
                 time.sleep(0.1)
 
