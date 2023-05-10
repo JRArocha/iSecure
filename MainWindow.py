@@ -12,8 +12,14 @@ import datetime
 from pushbullet import PushBullet
 import sys, res
 import cv2
+from threading import Thread
+import queue
 
 vid = cv2.VideoCapture(0)
+
+frame_queue = queue.Queue()
+
+video_name = None  
 
 
 # Opencv DNN
@@ -32,6 +38,21 @@ with open("dnn_model/classes.txt", "r") as file_object:
 
 
 class Ui_MainWindow(object):
+
+    def toogle_detection(self):
+        if self.comboDetection.currentData() == 0:
+            self.CamStart.stop()
+            self.CamStart = HomeCamera()
+            self.CamStart.start()
+            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        elif self.comboDetection.currentData() == 1:
+            self.CamStart.stop()
+            self.CamStart = Detection()
+            self.CamStart.start()
+            self.CamStart.ImageUpdate.connect(self.startCamera)
+            
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1440, 804)
@@ -144,36 +165,32 @@ class Ui_MainWindow(object):
         self.widget_2.setGeometry(QRect(0, 90, 501, 311))
         self.widget_2.setObjectName("widget_2")
         self.comboBBox = QComboBox(self.widget_2)
-        self.comboBBox.setEnabled(True)
+        self.comboBBox.setEnabled(False)
         self.comboBBox.setGeometry(QRect(410, 130, 61, 41))
         self.comboBBox.setAutoFillBackground(False)
         self.comboBBox.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
         self.comboBBox.setObjectName("comboBBox")
-        self.comboBBox.addItem("")
-        self.comboBBox.addItem("")
+        self.comboBBox.addItem("Off", 0)
+        self.comboBBox.addItem("On", 1)
         self.labelAPI = QLabel(self.widget_2)
         self.labelAPI.setGeometry(QRect(40, 52, 91, 31))
         self.labelAPI.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 25px;")
         self.labelAPI.setObjectName("labelAPI")
         self.comboDetection = QComboBox(self.widget_2)
-        self.comboDetection.setEnabled(True)
+        self.comboDetection.setEnabled(False)
         self.comboDetection.setGeometry(QRect(410, 190, 61, 41))
         self.comboDetection.setAutoFillBackground(False)
         self.comboDetection.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
         self.comboDetection.setObjectName("comboDetection")
-        self.comboDetection.addItem("")
-        self.comboDetection.addItem("")
+        self.comboDetection.addItem("Off", 0)
+        self.comboDetection.addItem("On", 1)
         self.apiKey = QLineEdit(self.widget_2)
-
-
-        self.apiKey.text()
-
-
+        self.apiKey.setEnabled(False)
         self.apiKey.setGeometry(QRect(150, 50, 321, 41))
         self.apiKey.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
@@ -199,6 +216,7 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.label_9.raise_()
         self.btnCamSave = QPushButton(self.widget_2)
+        self.btnCamSave.clicked.connect(self.toogle_detection)
         self.btnCamSave.setGeometry(QRect(210, 260, 101, 31))
         self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -434,6 +452,7 @@ class Ui_MainWindow(object):
         
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
+        print(self.mediaPlayer.errorString())
         self.mediaPlayer.setVideoOutput(videoWidget)
 
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
@@ -442,6 +461,7 @@ class Ui_MainWindow(object):
         icon5 = QIcon()
         icon5.addPixmap(QPixmap("help.jpg"), QIcon.Normal, QIcon.On)
         self.tabWidget.addTab(self.Help, icon5, "")
+        self.mediaPlayer.pause()
         
 
         # EXIT BUTTON
@@ -476,11 +496,11 @@ class Ui_MainWindow(object):
         self.selectCamera.setCurrentText(_translate("MainWindow", "Select Camera"))
         self.selectCamera.setItemText(0, _translate("MainWindow", "Camera 1"))
         self.label_13.setText(_translate("MainWindow", "Counter"))
-        self.comboBBox.setItemText(0, _translate("MainWindow", "On"))
-        self.comboBBox.setItemText(1, _translate("MainWindow", "Off"))
+        self.comboBBox.setItemText(0, _translate("MainWindow", "Off"))
+        self.comboBBox.setItemText(1, _translate("MainWindow", "On"))
         self.labelAPI.setText(_translate("MainWindow", "API Key"))
-        self.comboDetection.setItemText(0, _translate("MainWindow", "On"))
-        self.comboDetection.setItemText(1, _translate("MainWindow", "Off"))
+        self.comboDetection.setItemText(0, _translate("MainWindow", "Off"))
+        self.comboDetection.setItemText(1, _translate("MainWindow", "On"))
         self.labelBoundingBox.setText(_translate("MainWindow", "Bounding Box"))
         self.labelDetection.setText(_translate("MainWindow", "Detection"))
         self.btnCamSave.setText(_translate("MainWindow", "Save"))
@@ -517,18 +537,16 @@ class Ui_MainWindow(object):
     def CameraStart(self):
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
-        self.CamStart = Detection()
+        self.comboDetection.setEnabled(True)
+        self.comboBBox.setEnabled(True)
+        self.apiKey.setEnabled(True)
+        self.CamStart = HomeCamera()
         self.CamStart.start()
         self.CamStart.ImageUpdate.connect(self.startCamera)
         
-        
     def startCamera(self, Image):
-        self.labelHome.setPixmap(QPixmap.fromImage(Image))
-        self.labelHome.setScaledContents(True)
-
         self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
-        self.labelCameraFeed.setScaledContents(True)
-        
+        self.labelCameraFeed.setScaledContents(True)     
 
     def CancelFeed(self):
         self.labelCameraFeed.setPixmap(QPixmap("camera.jpg"))
@@ -536,6 +554,9 @@ class Ui_MainWindow(object):
         
         self.btnStart.setEnabled(True)
         self.btnStop.setEnabled(False)
+        self.comboDetection.setEnabled(False)
+        self.comboBBox.setEnabled(False)
+        self.apiKey.setEnabled(False)
         self.CamStart.stop()
 
         self.HomeCamera = HomeCamera()
@@ -543,7 +564,10 @@ class Ui_MainWindow(object):
         self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
 
     def videoTutorial(self):
-        self.mediaPlayer.play()
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.mediaPlayer.pause()
+        else:
+            self.mediaPlayer.play()
 
     def positionChanged(self, position):
         self.horizontalSlider.setValue(position)
@@ -554,6 +578,11 @@ class Ui_MainWindow(object):
     def setPosition(self, position):
         self.mediaPlayer.setPosition(position)
 
+#     def toggle_bounding_box(self):
+#         if self.comboBBox.currentData == 0:
+#            self.show_bounding_box = True
+#         elif self.comboBBox.currentData == 1:
+#            self.show_bounding_box = False
 
         
 class HomeCamera(QThread):
@@ -575,9 +604,12 @@ class HomeCamera(QThread):
         
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
+
+
     def run(self):
 
-        # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY"   # CJ API
+        
+        # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
         pb = PushBullet(API_KEY)
@@ -590,8 +622,29 @@ class Detection(QThread):
         detection_stopped_time = None
         timer_started = False
         SECONDS_TO_RECORD_AFTER_DETECTION = 5
+        
 
         self.ThreadActive = True
+
+        def send_notification():
+            while True:
+                # get the next frame from the queue
+                frame = frame_queue.get()
+                if os.path.exists(img_name):
+                    # upload the image file
+                    with open(img_name, "rb") as pic:
+                        file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
+                        push = pb.push_file(**file_data)
+                        print("Notification sent to user")
+
+                # sleep for a short time before checking again
+                time.sleep(0.1)
+
+        # start the notification thread
+        notification_thread = Thread(target=send_notification)
+        notification_thread.start()
+
+        
 
         while self.ThreadActive:
             QtWidgets.QApplication.processEvents()
@@ -611,7 +664,14 @@ class Detection(QThread):
                         class_name = classes[class_id]
                     #if human is detected then draw a bounding box
                     if class_id == 0:
+                        (img_h, img_w) = FlippedImage.shape[:2]
+                        xFlip = img_w - x - w
+                        cv2.rectangle(FlippedImage, (xFlip, y), (xFlip + w, y + h), (0,255,0), 1)
                         cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
+                        cv2.putText(FlippedImage, class_name.upper(), (xFlip, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(frame, class_name.upper(), (x, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(FlippedImage,str(round(score*100,2))+'%',(xFlip + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(frame,str(round(score*100,2))+'%',(x + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
                         print(class_name)
                         class_id = 1
                         if detection:
@@ -622,15 +682,12 @@ class Detection(QThread):
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
                             cv2.imwrite(img_name, frame)
+                            print("Snapshot Taken")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
-                            #send notification
-                            with open(img_name, "rb") as pic:
-                                file_data = pb.upload_file(pic, "snapshot-{detect_time}.jpg")
-                                push = pb.push_file(**file_data)
-                            print("{} written!".format(img_name))
                             rec = cv2.VideoWriter(
-                                f"{current_time}.mp4", fourcc, 15, frame_size)
+                                f"{current_time}.mp4", fourcc, 10, frame_size)
                             print("Started Recording!")
+                            frame_queue.put(FlippedImage)
                             
                             # #---------------------end of human detection --------------------
                         
@@ -644,11 +701,10 @@ class Detection(QThread):
                                 rec.release()
                                 print('Stop Recording!')
                                 #Send video to user
-                                # with open(f"{current_time}.mp4", "rb") as vid:
-                                #     file_data = pb.upload_file(vid, f"{current_time}.mp4")
-
-                                # push = pb.push_file(**file_data)
-                        
+                                with open(f"{current_time}.mp4", "rb") as video:
+                                    file_data = pb.upload_file(video, f"{current_time}.mp4")
+                                push = pb.push_file(**file_data)
+                                
                         else:
                             timer_started = True
                             detection_stopped_time = time.time()
@@ -659,6 +715,12 @@ class Detection(QThread):
 
                 except Exception as e:
                     pass
+
+                # Convert the image back to the original format and emit the signal
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
                 
     def stop(self):
 
