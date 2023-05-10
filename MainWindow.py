@@ -38,21 +38,6 @@ with open("dnn_model/classes.txt", "r") as file_object:
 
 
 class Ui_MainWindow(object):
-
-    def toogle_detection(self):
-        if self.comboDetection.currentData() == 0:
-            self.CamStart.stop()
-            self.CamStart = HomeCamera()
-            self.CamStart.start()
-            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        elif self.comboDetection.currentData() == 1:
-            self.CamStart.stop()
-            self.CamStart = Detection()
-            self.CamStart.start()
-            self.CamStart.ImageUpdate.connect(self.startCamera)
-            
-
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1440, 804)
@@ -216,7 +201,7 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.label_9.raise_()
         self.btnCamSave = QPushButton(self.widget_2)
-        self.btnCamSave.clicked.connect(self.toogle_detection)
+        self.btnCamSave.clicked.connect(self.cameraComboBox)
         self.btnCamSave.setGeometry(QRect(210, 260, 101, 31))
         self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -578,11 +563,36 @@ class Ui_MainWindow(object):
     def setPosition(self, position):
         self.mediaPlayer.setPosition(position)
 
-#     def toggle_bounding_box(self):
-#         if self.comboBBox.currentData == 0:
-#            self.show_bounding_box = True
-#         elif self.comboBBox.currentData == 1:
-#            self.show_bounding_box = False
+    def cameraComboBox(self):
+        if self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
+           self.CamStart.stop()
+           self.CamStart = HomeCamera()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
+
+        elif self.comboBBox.currentData() == 1 and self.comboDetection.currentData() == 0:
+           self.CamStart.stop()
+           self.CamStart = BoundingBox()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
+
+        elif self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 1:
+           self.CamStart.stop()
+           self.CamStart = Detection()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
+
+        elif self.comboBBox.currentData() == 1 and self.comboDetection.currentData() == 1:
+           self.CamStart.stop()
+           self.CamStart = BoxedDetection()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
+
+        else:
+           self.CamStart.stop()
+           self.CamStart = HomeCamera()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
 
         
 class HomeCamera(QThread):
@@ -604,11 +614,169 @@ class HomeCamera(QThread):
         
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
-
-
     def run(self):
+        
+        # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
+        API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+
+        pb = PushBullet(API_KEY)
+
+        frame_size = (int(vid.get(3)), int(vid.get(4)))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
         
+        detection = False
+        detection_stopped_time = None
+        timer_started = False
+        SECONDS_TO_RECORD_AFTER_DETECTION = 5
+        
+
+        self.ThreadActive = True
+
+        def send_notification():
+            while True:
+                # get the next frame from the queue
+                frame = frame_queue.get()
+                if os.path.exists(img_name):
+                    # upload the image file
+                    with open(img_name, "rb") as pic:
+                        file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
+                        push = pb.push_file(**file_data)
+                        print("Notification sent to user")
+
+                # sleep for a short time before checking again
+                time.sleep(0.1)
+
+        # start the notification thread
+        notification_thread = Thread(target=send_notification)
+        notification_thread.start()
+
+        
+
+        while self.ThreadActive:
+            QtWidgets.QApplication.processEvents()
+            ret, frame = vid.read()
+            if ret:
+                Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                FlippedImage = cv2.flip(Image, 1)
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
+                try:
+                    class_id = None
+                    (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
+                    for class_id, score, bbox in zip(class_ids, scores, bboxes):
+                        (x, y, w, h) = bbox
+                        class_name = classes[class_id]
+                    #if human is detected then draw a bounding box
+                    if class_id == 0:
+                        print(class_name)
+                        class_id = 1
+                        if detection:
+                            timer_started = False
+                        else:
+                            detection = True
+                            current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
+                            detect_time = datetime.datetime.now().strftime("%I:%M %p")
+                            img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
+                            cv2.imwrite(img_name, frame)
+                            print("Snapshot Taken")
+                            push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
+                            rec = cv2.VideoWriter(
+                                f"{current_time}.mp4", fourcc, 10, frame_size)
+                            print("Started Recording!")
+                            frame_queue.put(FlippedImage)
+                            
+                            # #---------------------end of human detection --------------------
+                        
+                #Records and save video into mp4 file when there is a detection               
+                    elif detection:
+                        if timer_started:
+                            print(int(SECONDS_TO_RECORD_AFTER_DETECTION - (time.time() - detection_stopped_time)))
+                            if time.time() - detection_stopped_time >= SECONDS_TO_RECORD_AFTER_DETECTION:
+                                detection = False
+                                timer_started = False
+                                rec.release()
+                                print('Stop Recording!')
+                                #Send video to user
+                                with open(f"{current_time}.mp4", "rb") as video:
+                                    file_data = pb.upload_file(video, f"{current_time}.mp4")
+                                push = pb.push_file(**file_data)
+                                
+                        else:
+                            timer_started = True
+                            detection_stopped_time = time.time()
+
+                    if detection:
+                        rec.write(frame)
+                #------------------end of recording----------------------------------------
+
+                except Exception as e:
+                    pass
+
+                # Convert the image back to the original format and emit the signal
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
+                
+    def stop(self):
+
+        self.ThreadActive = False
+        self.quit()
+
+
+class BoundingBox(QThread):
+    ImageUpdate = pyqtSignal(QImage)
+    
+    def run(self):
+        self.ThreadActive = True
+        while self.ThreadActive:
+            QtWidgets.QApplication.processEvents()
+            ret, frame = vid.read()
+            if ret:
+                Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                FlippedImage = cv2.flip(Image, 1)
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+
+                try:
+                    class_id = None
+                    (class_ids, scores, bboxes) = model.detect(frame, confThreshold=0.3, nmsThreshold=.4)
+                    for class_id, score, bbox in zip(class_ids, scores, bboxes):
+                        (x, y, w, h) = bbox
+                        class_name = classes[class_id]
+                    #if human is detected then draw a bounding box
+                    if class_id == 0:
+                        (img_h, img_w) = FlippedImage.shape[:2]
+                        xFlip = img_w - x - w
+                        cv2.rectangle(FlippedImage, (xFlip, y), (xFlip + w, y + h), (0,255,0), 1)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
+                        cv2.putText(FlippedImage, class_name.upper(), (xFlip, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(frame, class_name.upper(), (x, y - 10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(FlippedImage,str(round(score*100,2))+'%',(xFlip + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        cv2.putText(frame,str(round(score*100,2))+'%',(x + 100, y - 10),cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0), 2)
+                        print(class_name)
+                        class_id = 1
+
+                except Exception as e:
+                    pass
+
+                # Convert the image back to the original format and emit the signal
+                ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
+                Pic = ConvertToQtFormat.scaled(1291, 601, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(Pic)
+                
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
+
+
+class BoxedDetection(QThread):
+    ImageUpdate = pyqtSignal(QImage)
+    def run(self):
         # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
@@ -726,8 +894,6 @@ class Detection(QThread):
 
         self.ThreadActive = False
         self.quit()
-
-
 
 if __name__ == "__main__":
     import sys
