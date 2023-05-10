@@ -211,14 +211,19 @@ font-size: 18px</string>
 font-size: 18px</string>
         </property>
         <property name="currentText">
-         <string>Select Camera</string>
+         <string>Camera 1</string>
         </property>
         <property name="placeholderText">
          <string/>
         </property>
         <item>
          <property name="text">
-          <string>Select Camera</string>
+          <string>Camera 1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Camera 2</string>
          </property>
         </item>
        </widget>
@@ -423,6 +428,23 @@ font-size: 25px;</string>
           <string/>
          </property>
         </widget>
+        <widget class="QPushButton" name="btnCamSave">
+         <property name="geometry">
+          <rect>
+           <x>210</x>
+           <y>260</y>
+           <width>101</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(247, 247, 247);
+font-size: 18px</string>
+         </property>
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
         <zorder>label_9</zorder>
         <zorder>apiKey</zorder>
         <zorder>labelBoundingBox</zorder>
@@ -430,6 +452,7 @@ font-size: 25px;</string>
         <zorder>labelAPI</zorder>
         <zorder>comboDetection</zorder>
         <zorder>comboBBox</zorder>
+        <zorder>btnCamSave</zorder>
        </widget>
        <zorder>widget_2</zorder>
        <zorder>labelCameraFeed</zorder>
@@ -461,9 +484,9 @@ font-size: 25px;</string>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>10</x>
+          <x>20</x>
           <y>350</y>
-          <width>1291</width>
+          <width>1271</width>
           <height>261</height>
          </rect>
         </property>
@@ -901,7 +924,7 @@ font-size: 18px</string>
          <x>40</x>
          <y>50</y>
          <width>1291</width>
-         <height>601</height>
+         <height>551</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -922,6 +945,49 @@ font-size: 100px;</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QSlider" name="horizontalSlider">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>630</y>
+         <width>1161</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="playButton">
+       <property name="geometry">
+        <rect>
+         <x>50</x>
+         <y>620</y>
+         <width>91</width>
+         <height>51</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">border-radius: 15px;
+
+color: rgb(0, 0, 0);
+background-color: rgb(237, 237, 237);
+</string>
+       </property>
+       <property name="text">
+        <string>Play / Pause</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="tutorialWidget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>50</x>
+         <y>60</y>
+         <width>1271</width>
+         <height>531</height>
+        </rect>
        </property>
       </widget>
      </widget>
