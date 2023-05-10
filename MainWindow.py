@@ -38,6 +38,13 @@ with open("dnn_model/classes.txt", "r") as file_object:
 
 
 class Ui_MainWindow(object):
+
+    def toggle_bounding_box(self, index):
+        if index == 0:
+            self.show_bounding_box = True
+        elif index == 1:
+            self.show_bounding_box = False
+            
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1440, 804)
@@ -437,7 +444,6 @@ class Ui_MainWindow(object):
         
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
-        print(self.mediaPlayer.errorString())
         self.mediaPlayer.setVideoOutput(videoWidget)
 
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
@@ -446,7 +452,6 @@ class Ui_MainWindow(object):
         icon5 = QIcon()
         icon5.addPixmap(QPixmap("help.jpg"), QIcon.Normal, QIcon.On)
         self.tabWidget.addTab(self.Help, icon5, "")
-        self.mediaPlayer.pause()
         
 
         # EXIT BUTTON
@@ -481,8 +486,8 @@ class Ui_MainWindow(object):
         self.selectCamera.setCurrentText(_translate("MainWindow", "Select Camera"))
         self.selectCamera.setItemText(0, _translate("MainWindow", "Camera 1"))
         self.label_13.setText(_translate("MainWindow", "Counter"))
-        self.comboBBox.setItemText(0, _translate("MainWindow", "Off"))
-        self.comboBBox.setItemText(1, _translate("MainWindow", "On"))
+        self.comboBBox.setItemText(0, _translate("MainWindow", "On"))
+        self.comboBBox.setItemText(1, _translate("MainWindow", "Off"))
         self.labelAPI.setText(_translate("MainWindow", "API Key"))
         self.comboDetection.setItemText(0, _translate("MainWindow", "Off"))
         self.comboDetection.setItemText(1, _translate("MainWindow", "On"))
@@ -614,9 +619,11 @@ class HomeCamera(QThread):
         
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
+
+
     def run(self):
-        
-        # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
+
+        # API_KEY = "o.ASdCcRfpsLEabwyPowDFQvfGYFu0kQEY"   # CJ API
         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
         pb = PushBullet(API_KEY)
@@ -671,6 +678,7 @@ class Detection(QThread):
                         class_name = classes[class_id]
                     #if human is detected then draw a bounding box
                     if class_id == 0:
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 1)
                         print(class_name)
                         class_id = 1
                         if detection:
@@ -723,6 +731,8 @@ class Detection(QThread):
                 
     def stop(self):
 
+        self.ThreadActive = False
+        self.quit()
         self.ThreadActive = False
         self.quit()
 
