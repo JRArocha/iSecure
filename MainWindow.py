@@ -15,6 +15,7 @@ import sys, res
 import cv2
 from threading import Thread
 import queue
+import pymysql
 
 vid = cv2.VideoCapture(0)
 
@@ -359,6 +360,7 @@ class Ui_MainWindow(object):
         self.tab_2 = QWidget()
         self.tab_2.setObjectName("tab_2")
         self.btnSaveSecurity = QPushButton(self.tab_2)
+        self.btnSaveSecurity.clicked.connect(self.updateSecurity)
         self.btnSaveSecurity.setGeometry(QRect(295, 360, 93, 28))
         self.btnSaveSecurity.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "font-size: 18px")
@@ -374,6 +376,18 @@ class Ui_MainWindow(object):
         self.labelOldUname.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 20px;")
         self.labelOldUname.setObjectName("labelOldUname")
+        self.labelOldPword = QLabel(self.tab_2)
+        self.labelOldPword.setGeometry(QRect(80, 160, 151, 31))
+        self.labelOldPword.setStyleSheet("color: rgb(255, 255, 255);\n"
+"font-size: 20px;")
+        self.labelOldPword.setObjectName("labelOldPword")
+        self.lineOldPword = QLineEdit(self.tab_2)
+        self.lineOldPword.setEchoMode(QLineEdit.Password)
+        self.lineOldPword.setGeometry(QRect(289, 160, 311, 41))
+        self.lineOldPword.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+"color: rgb(0, 0, 0);\n"
+"font-size: 18px")
+        self.lineOldPword.setObjectName("lineOldPword")
         self.labelNewUname = QLabel(self.tab_2)
         self.labelNewUname.setGeometry(QRect(80, 220, 151, 31))
         self.labelNewUname.setStyleSheet("color: rgb(255, 255, 255);\n"
@@ -385,23 +399,13 @@ class Ui_MainWindow(object):
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
         self.lineNewUname.setObjectName("lineNewUname")
-        self.labelOldPword = QLabel(self.tab_2)
-        self.labelOldPword.setGeometry(QRect(80, 160, 151, 31))
-        self.labelOldPword.setStyleSheet("color: rgb(255, 255, 255);\n"
-"font-size: 20px;")
-        self.labelOldPword.setObjectName("labelOldPword")
-        self.lineOldPword = QLineEdit(self.tab_2)
-        self.lineOldPword.setGeometry(QRect(289, 160, 311, 41))
-        self.lineOldPword.setStyleSheet("background-color: rgb(247, 247, 247);\n"
-"color: rgb(0, 0, 0);\n"
-"font-size: 18px")
-        self.lineOldPword.setObjectName("lineOldPword")
         self.labelNewPword = QLabel(self.tab_2)
         self.labelNewPword.setGeometry(QRect(80, 280, 151, 31))
         self.labelNewPword.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 20px;")
         self.labelNewPword.setObjectName("labelNewPword")
         self.lineNewPword = QLineEdit(self.tab_2)
+        self.lineNewPword.setEchoMode(QLineEdit.Password)
         self.lineNewPword.setGeometry(QRect(289, 280, 311, 41))
         self.lineNewPword.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
@@ -520,8 +524,8 @@ class Ui_MainWindow(object):
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab), _translate("MainWindow", "File "))
         self.btnSaveSecurity.setText(_translate("MainWindow", "Save"))
         self.labelOldUname.setText(_translate("MainWindow", "Old Username  :"))
-        self.labelNewUname.setText(_translate("MainWindow", "New Username  :"))
         self.labelOldPword.setText(_translate("MainWindow", "Old Password  :"))
+        self.labelNewUname.setText(_translate("MainWindow", "New Username  :"))
         self.labelNewPword.setText(_translate("MainWindow", "New Password  :"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("MainWindow", "Security"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Settings), _translate("MainWindow", "Settings"))
@@ -611,9 +615,43 @@ class Ui_MainWindow(object):
         self.lineLocation.setText(input_dir)
 
     def updateSecurity(self):
-        Username = self.lineOldUname.text()
-        Password= self.lineOldPword.text()
+        username = self.lineOldUname.text()
+        password= self.lineOldPword.text()
+        newUname = self.lineNewUname.text()
+        newPword = self.lineNewPword.text()
+        con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+        cur = con.cursor()
+        query = "SELECT * FROM logindb WHERE username = %s AND password = %s"
+        data = cur.execute(query,(username,password))
+        if (len(cur.fetchall())>0):
+            con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+            cur = con.cursor()
+            sql = "UPDATE logindb SET Username = '"+newUname+"', Password = '"+newPword+"'"
+            self.updateSuccess("Alert", "Update Success... Restarting the System")
+            cur.execute(sql)
+            con.commit()
+            cur.close()
+            con.close()
+            sys.exit()
+                
+        else:
+            self.warning("Alert", "Username and password Does not match")
+                    
+                     
 
+    def warning(self, title, message):
+        text = QMessageBox()
+        text.setWindowTitle(title)
+        text.setText(message)
+        text.setStandardButtons(QMessageBox.Ok)
+        text.exec_()
+
+    def updateSuccess(self, title, message):
+        text = QMessageBox()
+        text.setWindowTitle(title)
+        text.setText(message)
+        text.setStandardButtons(QMessageBox.Ok)
+        text.exec_()
 
 
 class HomeCamera(QThread):
