@@ -7,6 +7,7 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from pickle import TRUE
 import numpy as np
 import os
+from os.path import expanduser
 import time
 import datetime
 from pushbullet import PushBullet
@@ -38,6 +39,21 @@ with open("dnn_model/classes.txt", "r") as file_object:
 
 
 class Ui_MainWindow(object):
+
+    def toogle_detection(self):
+        if self.comboDetection.currentData() == 0:
+            self.CamStart.stop()
+            self.CamStart = HomeCamera()
+            self.CamStart.start()
+            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
+
+        elif self.comboDetection.currentData() == 1:
+            self.CamStart.stop()
+            self.CamStart = Detection()
+            self.CamStart.start()
+            self.CamStart.ImageUpdate.connect(self.startCamera)
+            
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1440, 804)
@@ -327,6 +343,7 @@ class Ui_MainWindow(object):
 "")
         self.labelFileLocation.setObjectName("labelFileLocation")
         self.btnBrowse = QToolButton(self.tab)
+        self.btnBrowse.clicked.connect(self.chooseDirectory)
         self.btnBrowse.setGeometry(QRect(510, 220, 103, 42))
         self.btnBrowse.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -564,11 +581,12 @@ class Ui_MainWindow(object):
         self.mediaPlayer.setPosition(position)
 
     def cameraComboBox(self):
+        
         if self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
            self.CamStart = HomeCamera()
            self.CamStart.start()
-           self.CamStart.ImageUpdate.connect(self.startCamera)
+           self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
 
         elif self.comboBBox.currentData() == 1 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
@@ -588,13 +606,11 @@ class Ui_MainWindow(object):
            self.CamStart.start()
            self.CamStart.ImageUpdate.connect(self.startCamera)
 
-        else:
-           self.CamStart.stop()
-           self.CamStart = HomeCamera()
-           self.CamStart.start()
-           self.CamStart.ImageUpdate.connect(self.startCamera)
+    def chooseDirectory(self):
+        input_dir = QFileDialog.getExistingDirectory(None, 'Select a folder:', expanduser("~"))
+        self.lineLocation.setText(input_dir)
 
-        
+
 class HomeCamera(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
@@ -615,7 +631,6 @@ class HomeCamera(QThread):
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
-        
         # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
         API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
 
