@@ -375,23 +375,23 @@ class Ui_MainWindow(object):
 "font-size: 20px;")
         self.labelOldUname.setObjectName("labelOldUname")
         self.labelNewUname = QLabel(self.tab_2)
-        self.labelNewUname.setGeometry(QRect(80, 160, 151, 31))
+        self.labelNewUname.setGeometry(QRect(80, 220, 151, 31))
         self.labelNewUname.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 20px;")
         self.labelNewUname.setObjectName("labelNewUname")
         self.lineNewUname = QLineEdit(self.tab_2)
-        self.lineNewUname.setGeometry(QRect(289, 160, 311, 41))
+        self.lineNewUname.setGeometry(QRect(289, 220, 311, 41))
         self.lineNewUname.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
         self.lineNewUname.setObjectName("lineNewUname")
         self.labelOldPword = QLabel(self.tab_2)
-        self.labelOldPword.setGeometry(QRect(80, 220, 151, 31))
+        self.labelOldPword.setGeometry(QRect(80, 160, 151, 31))
         self.labelOldPword.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 20px;")
         self.labelOldPword.setObjectName("labelOldPword")
         self.lineOldPword = QLineEdit(self.tab_2)
-        self.lineOldPword.setGeometry(QRect(289, 220, 311, 41))
+        self.lineOldPword.setGeometry(QRect(289, 160, 311, 41))
         self.lineOldPword.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
@@ -522,7 +522,7 @@ class Ui_MainWindow(object):
         self.labelOldUname.setText(_translate("MainWindow", "Old Username  :"))
         self.labelNewUname.setText(_translate("MainWindow", "New Username  :"))
         self.labelOldPword.setText(_translate("MainWindow", "Old Password  :"))
-        self.labelNewPword.setText(_translate("MainWindow", "New Password"))
+        self.labelNewPword.setText(_translate("MainWindow", "New Password  :"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("MainWindow", "Security"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Settings), _translate("MainWindow", "Settings"))
         self.labelHelp.setText(_translate("MainWindow", "Video Tutorial"))
@@ -609,6 +609,11 @@ class Ui_MainWindow(object):
     def chooseDirectory(self):
         input_dir = QFileDialog.getExistingDirectory(None, 'Select a folder:', expanduser("~"))
         self.lineLocation.setText(input_dir)
+
+    def updateSecurity(self):
+        Username = self.lineOldUname.text()
+        Password= self.lineOldPword.text()
+
 
 
 class HomeCamera(QThread):
