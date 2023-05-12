@@ -39,22 +39,21 @@ with open("dnn_model/classes.txt", "r") as file_object:
         classes.append(class_name)
 
 
+# Load Data from Database
+con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+cur = con.cursor()
+cur.execute("SELECT API , Directory FROM logindb")
+
+for i in range (cur.rowcount):
+        data = cur.fetchall()
+
+        for row in data:
+                api = str(row[0])
+                directory = str(row[1])
+
+
+
 class Ui_MainWindow(object):
-
-    def toogle_detection(self):
-        if self.comboDetection.currentData() == 0:
-            self.CamStart.stop()
-            self.CamStart = HomeCamera()
-            self.CamStart.start()
-            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
-
-        elif self.comboDetection.currentData() == 1:
-            self.CamStart.stop()
-            self.CamStart = Detection()
-            self.CamStart.start()
-            self.CamStart.ImageUpdate.connect(self.startCamera)
-            
-
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1440, 804)
@@ -218,7 +217,7 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.label_9.raise_()
         self.btnCamSave = QPushButton(self.widget_2)
-        self.btnCamSave.clicked.connect(self.cameraComboBox)
+        self.btnCamSave.clicked.connect(self.buttonCameraSave)
         self.btnCamSave.setGeometry(QRect(210, 260, 101, 31))
         self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -333,6 +332,8 @@ class Ui_MainWindow(object):
         self.tab = QWidget()
         self.tab.setObjectName("tab")
         self.btnSaveFile = QPushButton(self.tab)
+        self.btnSaveFile.clicked.connect(self.buttonSaveDirectory)
+        self.btnSaveFile.setEnabled(False)
         self.btnSaveFile.setGeometry(QRect(295, 360, 93, 28))
         self.btnSaveFile.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "font-size: 18px")
@@ -344,12 +345,13 @@ class Ui_MainWindow(object):
 "")
         self.labelFileLocation.setObjectName("labelFileLocation")
         self.btnBrowse = QToolButton(self.tab)
-        self.btnBrowse.clicked.connect(self.chooseDirectory)
+        self.btnBrowse.clicked.connect(self.buttonBrowse)
         self.btnBrowse.setGeometry(QRect(510, 220, 103, 42))
         self.btnBrowse.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
         self.btnBrowse.setObjectName("btnBrowse")
         self.lineLocation = QLineEdit(self.tab)
+        self.lineLocation.setEnabled(False)
         self.lineLocation.setGeometry(QRect(47, 220, 463, 41))
         self.lineLocation.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "color: rgb(0, 0, 0);\n"
@@ -360,7 +362,7 @@ class Ui_MainWindow(object):
         self.tab_2 = QWidget()
         self.tab_2.setObjectName("tab_2")
         self.btnSaveSecurity = QPushButton(self.tab_2)
-        self.btnSaveSecurity.clicked.connect(self.updateSecurity)
+        self.btnSaveSecurity.clicked.connect(self.buttonSaveSecurity)
         self.btnSaveSecurity.setGeometry(QRect(295, 360, 93, 28))
         self.btnSaveSecurity.setStyleSheet("background-color: rgb(255, 255, 255);\n"
 "font-size: 18px")
@@ -584,13 +586,21 @@ class Ui_MainWindow(object):
     def setPosition(self, position):
         self.mediaPlayer.setPosition(position)
 
-    def cameraComboBox(self):
-        
+    def buttonCameraSave(self):
+        apikey = self.apiKey.text()
+        con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+        cur = con.cursor()
+        sql = "UPDATE logindb SET API = '"+apikey+"'"
+        cur.execute(sql)
+        con.commit()
+        cur.close()
+        con.close()
+
         if self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
            self.CamStart = HomeCamera()
            self.CamStart.start()
-           self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
+           self.CamStart.ImageUpdate.connect(self.startCamera)
 
         elif self.comboBBox.currentData() == 1 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
@@ -610,11 +620,31 @@ class Ui_MainWindow(object):
            self.CamStart.start()
            self.CamStart.ImageUpdate.connect(self.startCamera)
 
-    def chooseDirectory(self):
+    def buttonBrowse(self):
         input_dir = QFileDialog.getExistingDirectory(None, 'Select a folder:', expanduser("~"))
         self.lineLocation.setText(input_dir)
+        
+        if input_dir == "":
+            self.btnSaveFile.setEnabled(False)
 
-    def updateSecurity(self):
+        else:
+            self.btnSaveFile.setEnabled(True)
+            self.lineLocation.setEnabled(True)
+            
+    def buttonSaveDirectory(self):
+        dir = self.lineLocation.text()
+        con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+        cur = con.cursor()
+        sql = "UPDATE logindb SET Directory = '"+dir+"'"
+        self.alert("Alert", "Directory changed")
+        cur.execute(sql)
+        con.commit()
+        cur.close()
+        con.close()
+        self.btnSaveFile.setEnabled(False)
+        self.lineLocation.setEnabled(False)
+
+    def buttonSaveSecurity(self):
         username = self.lineOldUname.text()
         password= self.lineOldPword.text()
         newUname = self.lineNewUname.text()
@@ -627,7 +657,7 @@ class Ui_MainWindow(object):
             con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
             cur = con.cursor()
             sql = "UPDATE logindb SET Username = '"+newUname+"', Password = '"+newPword+"'"
-            self.updateSuccess("Alert", "Update Success... Restarting the System")
+            self.alert("Alert", "Update Success... Restarting the System")
             cur.execute(sql)
             con.commit()
             cur.close()
@@ -636,22 +666,15 @@ class Ui_MainWindow(object):
                 
         else:
             self.warning("Alert", "Username and password Does not match")
-                    
-                     
+                         
 
-    def warning(self, title, message):
+    def alert(self, title, message):
         text = QMessageBox()
         text.setWindowTitle(title)
         text.setText(message)
         text.setStandardButtons(QMessageBox.Ok)
         text.exec_()
 
-    def updateSuccess(self, title, message):
-        text = QMessageBox()
-        text.setWindowTitle(title)
-        text.setText(message)
-        text.setStandardButtons(QMessageBox.Ok)
-        text.exec_()
 
 
 class HomeCamera(QThread):
@@ -675,7 +698,8 @@ class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
         # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
-        API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+        # API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+        API_KEY = str(api)
 
         pb = PushBullet(API_KEY)
 
