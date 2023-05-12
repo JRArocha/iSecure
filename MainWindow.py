@@ -860,7 +860,8 @@ class BoxedDetection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
         # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
-        API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+        # API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
+        API_KEY = api
 
         pb = PushBullet(API_KEY)
 
