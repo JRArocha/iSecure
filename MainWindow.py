@@ -591,12 +591,14 @@ class Ui_MainWindow(object):
         con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
         cur = con.cursor()
         sql = "UPDATE logindb SET API = '"+apikey+"'"
-        cur.execute(sql)
-        con.commit()
-        cur.close()
-        con.close()
 
-        if self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
+        if apikey != "":
+           cur.execute(sql)
+           con.commit()
+           cur.close()
+           con.close()
+
+        elif self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
            self.CamStart = HomeCamera()
            self.CamStart.start()
@@ -762,11 +764,12 @@ class Detection(QThread):
                             current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
-                            cv2.imwrite(img_name, frame)
+                            snapshot = 'C:/Users/Dev/Desktop/Thesis/gui/iSecure/snapshots/'
+                            cv2.imwrite(snapshot+img_name, frame)
                             print("Snapshot Taken")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             rec = cv2.VideoWriter(
-                                f"{current_time}.mp4", fourcc, 10, frame_size)
+                                f"{directory+'/'}{current_time}.mp4", fourcc, 10, frame_size)
                             print("Started Recording!")
                             frame_queue.put(FlippedImage)
                             
@@ -932,11 +935,12 @@ class BoxedDetection(QThread):
                             current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
-                            cv2.imwrite(img_name, frame)
+                            snapshot = 'C:/Users/Dev/Desktop/Thesis/gui/iSecure/snapshots/'
+                            cv2.imwrite(snapshot+img_name, frame)
                             print("Snapshot Taken")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             rec = cv2.VideoWriter(
-                                f"{current_time}.mp4", fourcc, 10, frame_size)
+                                f"{directory+'/'}{current_time}.mp4", fourcc, 10, frame_size)
                             print("Started Recording!")
                             frame_queue.put(FlippedImage)
                             
