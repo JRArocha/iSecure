@@ -884,9 +884,9 @@ class BoxedDetection(QThread):
             while True:
                 # get the next frame from the queue
                 frame = frame_queue.get()
-                if os.path.exists(img_name):
+                if os.path.exists(snapshot_path):
                     # upload the image file
-                    with open(img_name, "rb") as pic:
+                    with open(snapshot_path, "rb") as pic:
                         file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
                         push = pb.push_file(**file_data)
                         print("Notification sent to user")
@@ -935,8 +935,9 @@ class BoxedDetection(QThread):
                             current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
-                            snapshot = 'C:/Users/Dev/Desktop/Thesis/gui/iSecure/snapshots/'
-                            cv2.imwrite(snapshot+img_name, frame)
+                            snapshot = './snapshots/'
+                            snapshot_path = os.path.join(snapshot, img_name)
+                            cv2.imwrite(snapshot_path, frame)
                             print("Snapshot Taken")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             rec = cv2.VideoWriter(
@@ -956,7 +957,7 @@ class BoxedDetection(QThread):
                                 rec.release()
                                 print('Stop Recording!')
                                 #Send video to user
-                                with open(f"{current_time}.mp4", "rb") as video:
+                                with open(f"{directory+'/'}{current_time}.mp4", "rb") as video:
                                     file_data = pb.upload_file(video, f"{current_time}.mp4")
                                 push = pb.push_file(**file_data)
                                 
