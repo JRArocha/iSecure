@@ -17,6 +17,8 @@ from threading import Thread
 import queue
 import pymysql
 
+
+
 vid = cv2.VideoCapture(0)
 
 frame_queue = queue.Queue()
@@ -124,11 +126,9 @@ class Ui_MainWindow(object):
         self.labelCameraFeed.setLineWidth(4)
         self.labelCameraFeed.setAlignment(Qt.AlignCenter)
         self.labelCameraFeed.setObjectName("labelCameraFeed")
-
         self.btnStart = QPushButton(self.widget_3)
         self.btnStart.setEnabled(True)
         self.btnStart.clicked.connect(self.CameraStart)
-
         self.btnStart.setGeometry(QRect(290, 20, 101, 31))
         self.btnStart.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
@@ -667,7 +667,7 @@ class Ui_MainWindow(object):
             sys.exit()
                 
         else:
-            self.warning("Alert", "Username and password Does not match")
+            self.alert("Alert", "Username and password Does not match")
                          
 
     def alert(self, title, message):
