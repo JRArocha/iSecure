@@ -144,8 +144,9 @@ class Ui_MainWindow(object):
 "font-size: 18px")
         self.btnStop.setObjectName("btnStop")
         self.selectCamera = QComboBox(self.widget_3)
-        self.selectCamera.addItem("Camera 1")
-        self.selectCamera.addItem("Camera 2")
+        self.selectCamera.addItem("Camera 1", 0)
+        self.selectCamera.addItem("Camera 2", 1)
+        self.selectCamera.setCurrentIndex(0)
         self.selectCamera.setObjectName(u"selectCamera")
         self.selectCamera.setGeometry(QRect(10, 20, 261, 31))
         self.selectCamera.setStyleSheet(u"background-color: rgb(247, 247, 247);\n"
@@ -460,7 +461,6 @@ class Ui_MainWindow(object):
         
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
-        print(self.mediaPlayer.errorString())
         self.mediaPlayer.setVideoOutput(videoWidget)
 
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
@@ -490,7 +490,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        self.tabWidget_2.setCurrentIndex(1)
+        self.tabWidget_2.setCurrentIndex(0)
         QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
