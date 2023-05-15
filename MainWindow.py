@@ -28,17 +28,15 @@ for i in range (cur.rowcount):
         for row in data:
                 api = str(row[0])
                 directory = str(row[1])
-                cam = str(row[2])
+                cam = int(row[2])
                 rtspCam = str(row[3])
 
 
 # rtsp = "rtsp://192.168.86.234/live/ch00_0"
-if int(cam) == 2:
-    print(rtspCam)
+if cam == 2:
     vid = cv2.VideoCapture(rtspCam)
 else:
-    print(cam)
-    vid = cv2.VideoCapture(int(cam))
+    vid = cv2.VideoCapture(cam)
 
 # vid = cv2.VideoCapture(0)
 
@@ -92,9 +90,15 @@ class Ui_MainWindow(object):
         # HOME TAB
 
         # Home Camera Start
-        self.HomeCamera = HomeCamera()
-        self.HomeCamera.start()
-        self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
+        if cam == 2:
+            self.HomeCamera = HomeCamera()
+            self.HomeCamera.start()
+            self.HomeCamera.ImageUpdate.connect(self.startCamera)
+
+        else:
+            self.HomeCamera = HomeCamera()
+            self.HomeCamera.start()
+            self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
 
         self.Home = QWidget()
         self.Home.setStyleSheet("background-color: rgb(47, 47, 47);\n"
@@ -537,6 +541,7 @@ class Ui_MainWindow(object):
         self.comboBBox.setEnabled(True)
         self.apiKey.setEnabled(True)
         self.btnCamSave.setEnabled(True)
+
         self.CamStart = HomeCamera()
         self.CamStart.start()
         self.CamStart.ImageUpdate.connect(self.startCamera)
