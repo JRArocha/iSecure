@@ -541,7 +541,7 @@ class Ui_MainWindow(object):
         self.btnMainExit.setText(_translate("MainWindow", "Exit"))
 
     def openFile(self):
-        fileName, _ = QFileDialog.getOpenFileName(None, 'Open Video File', "C:/Users/Dev/Desktop/Thesis/gui/iSecure/recordings", "Image files (*.mp4)")
+        fileName, _ = QFileDialog.getOpenFileName(None, 'Open Video File', directory, "Image files (*.mp4)")
  
         if fileName != '':
             self.galleryPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(fileName)))
