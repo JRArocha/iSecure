@@ -17,9 +17,22 @@ from threading import Thread
 import queue
 import pymysql
 
+# Load Data from Database
+con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+cur = con.cursor()
+cur.execute("SELECT API, Directory, Camera FROM logindb")
 
+for i in range (cur.rowcount):
+        data = cur.fetchall()
 
-vid = cv2.VideoCapture(0)
+        for row in data:
+                api = str(row[0])
+                directory = str(row[1])
+                cam = str(row[2])
+
+vid = cv2.VideoCapture(int(cam))
+
+# vid = cv2.VideoCapture(0)
 
 frame_queue = queue.Queue()
 
@@ -39,20 +52,6 @@ with open("dnn_model/classes.txt", "r") as file_object:
     for class_name in file_object.readlines():
         class_name = class_name.strip()
         classes.append(class_name)
-
-
-# Load Data from Database
-con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
-cur = con.cursor()
-cur.execute("SELECT API , Directory FROM logindb")
-
-for i in range (cur.rowcount):
-        data = cur.fetchall()
-
-        for row in data:
-                api = str(row[0])
-                directory = str(row[1])
-
 
 
 class Ui_MainWindow(object):
@@ -146,7 +145,8 @@ class Ui_MainWindow(object):
         self.selectCamera = QComboBox(self.widget_3)
         self.selectCamera.addItem("Camera 1", 0)
         self.selectCamera.addItem("Camera 2", 1)
-        self.selectCamera.setCurrentIndex(0)
+        self.selectCamera.setCurrentIndex(int(cam))
+        self.selectCamera.setEnabled(True)
         self.selectCamera.setObjectName(u"selectCamera")
         self.selectCamera.setGeometry(QRect(10, 20, 261, 31))
         self.selectCamera.setStyleSheet(u"background-color: rgb(247, 247, 247);\n"
@@ -543,6 +543,24 @@ class Ui_MainWindow(object):
         
 
     def CameraStart(self):
+        con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+        cur = con.cursor()
+        sql = "UPDATE logindb SET Camera = '"+str(self.selectCamera.currentData())+"'"
+        if self.selectCamera.currentData() == 0:
+            self.alert("Alert", "Camera updated")
+            cur.execute(sql)
+            con.commit()
+            cur.close()
+            con.close()
+
+        elif self.selectCamera.currentData() == 1:
+            self.alert("Alert", "Camera updated")
+            cur.execute(sql)
+            con.commit()
+            cur.close()
+            con.close()
+
+        self.selectCamera.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
         self.comboDetection.setEnabled(True)
@@ -560,6 +578,7 @@ class Ui_MainWindow(object):
         self.labelCameraFeed.setPixmap(QPixmap("camera.jpg"))
         self.labelCameraFeed.setScaledContents(True)
         
+        self.selectCamera.setEnabled(True)
         self.btnStart.setEnabled(True)
         self.btnStop.setEnabled(False)
         self.comboDetection.setEnabled(False)
@@ -721,9 +740,9 @@ class Detection(QThread):
             while True:
                 # get the next frame from the queue
                 frame = frame_queue.get()
-                if os.path.exists(img_name):
+                if os.path.exists(snapshot_path):
                     # upload the image file
-                    with open(img_name, "rb") as pic:
+                    with open(snapshot_path, "rb") as pic:
                         file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
                         push = pb.push_file(**file_data)
                         print("Notification sent to user")
@@ -764,8 +783,9 @@ class Detection(QThread):
                             current_time = datetime.datetime.now().strftime("%b-%d-%Y-%H-%M-%S")
                             detect_time = datetime.datetime.now().strftime("%I:%M %p")
                             img_name = 'Snapshot '+ str(time.strftime("%Y-%b-%d at %H.%M.%S %p"))+'.png'
-                            snapshot = 'C:/Users/Dev/Desktop/Thesis/gui/iSecure/snapshots/'
-                            cv2.imwrite(snapshot+img_name, frame)
+                            snapshot = './snapshots/'
+                            snapshot_path = os.path.join(snapshot, img_name)
+                            cv2.imwrite(snapshot_path, frame)
                             print("Snapshot Taken")
                             push = pb.push_note(f" ALERT on {detect_time}",class_name.upper() + " DETECTED")
                             rec = cv2.VideoWriter(
