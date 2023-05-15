@@ -145,6 +145,7 @@ class Ui_MainWindow(object):
         self.selectCamera = QComboBox(self.widget_3)
         self.selectCamera.addItem("Camera 1", 0)
         self.selectCamera.addItem("Camera 2", 1)
+        self.selectCamera.addItem("Camera 3", 2)
         self.selectCamera.setCurrentIndex(int(cam))
         self.selectCamera.setEnabled(True)
         self.selectCamera.setObjectName(u"selectCamera")
@@ -556,6 +557,15 @@ class Ui_MainWindow(object):
                 MainWindow.close()
 
         elif self.selectCamera.currentData() == 1:
+            cur.execute(sql)
+            con.commit()
+            cur.close()
+            con.close()
+            if self.selectCamera.currentData() != int(cam):
+                self.alert("Alert", "Camera Changed... Restart the system...")
+                MainWindow.close()
+
+        elif self.selectCamera.currentData() == 2:
             cur.execute(sql)
             con.commit()
             cur.close()
