@@ -42,9 +42,6 @@ class Ui_Form(object):
 "border-top-left-radius: 50px;")
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
-
-
-
         self.label_4 = QLabel(self.widget)
         self.label_4.setGeometry(QRect(510, 170, 141, 51))
         font = QFont()
@@ -54,8 +51,6 @@ class Ui_Form(object):
         self.label_4.setFont(font)
         self.label_4.setStyleSheet("color: rgb(255, 255, 255);")
         self.label_4.setObjectName("label_4")
-
-
         self.lineEdit = QLineEdit(self.widget)
         self.lineEdit.setGeometry(QRect(460, 250, 225, 50))
         self.lineEdit.setStyleSheet("background-color: rgba(0,0,0,0);\n"
@@ -65,8 +60,6 @@ class Ui_Form(object):
 "padding-bottom: 7px;\n"
 "text-color: white;")
         self.lineEdit.setObjectName("lineEdit")
-
-
         self.lineEdit_2 = QLineEdit(self.widget)
         self.lineEdit_2.setEchoMode(QLineEdit.Password)
         self.lineEdit_2.setGeometry(QRect(460, 330, 225, 40))
@@ -137,7 +130,6 @@ class Ui_Form(object):
         QMetaObject.connectSlotsByName(Form)
 
         self.counter = 3
-
         
     def login(self):
         username = self.lineEdit.text()
@@ -161,7 +153,6 @@ class Ui_Form(object):
                      self.warning("Alert", f"Attempts remaining {self.counter}")
                      self.counter -= 1
                      
-
     def warning(self, title, message):
         text = QMessageBox()
         text.setWindowTitle(title)
@@ -177,7 +168,6 @@ class Ui_Form(object):
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Password"))
         self.pushButton.setText(_translate("Form", "Login"))
         self.pushButton_2.setText(_translate("Form", "X"))
-
 
 if __name__ == "__main__":
     import sys
