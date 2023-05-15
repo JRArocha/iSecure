@@ -34,10 +34,8 @@ for i in range (cur.rowcount):
 
 # rtsp = "rtsp://192.168.86.234/live/ch00_0"
 if int(cam) == 2:
-    print(rtspCam)
     vid = cv2.VideoCapture(rtspCam)
 else:
-    print(cam)
     vid = cv2.VideoCapture(int(cam))
 
 # vid = cv2.VideoCapture(0)
@@ -82,7 +80,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setStyleSheet("background-color: rgb(47, 47, 47);")
         self.tabWidget.setTabPosition(QTabWidget.North)
         self.tabWidget.setTabShape(QTabWidget.Rounded)
-        self.tabWidget.setIconSize(QSize(201, 40))
+        self.tabWidget.setIconSize(QSize(159, 40))
         self.tabWidget.setElideMode(Qt.ElideLeft)
         self.tabWidget.setUsesScrollButtons(False)
         self.tabWidget.setMovable(False)
@@ -263,7 +261,68 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QPixmap("camera.jpg"), QIcon.Normal, QIcon.On)
         self.tabWidget.addTab(self.Camera, icon2, "")
 
+        # GALLERY TAB
+        self.Gallery = QWidget()
+        self.Gallery.setObjectName("Gallery")
+          # for video player
+        self.labelGallery = QLabel(self.Gallery)
+        self.labelGallery.setGeometry(QRect(40, 50, 1291, 551))
+        self.labelGallery.setStyleSheet("color: white;\n"
+"font-size: 100px;")
+        self.labelGallery.setFrameShape(QFrame.Box)
+        self.labelGallery.setFrameShadow(QFrame.Raised)
+        self.labelGallery.setLineWidth(4)
+        self.labelGallery.setAlignment(Qt.AlignCenter)
+        self.labelGallery.setObjectName("labelGallery")
+        self.gallerySlider = QSlider(self.Gallery)
+        self.gallerySlider.setGeometry(QRect(255, 630, 1069, 31))
+        self.gallerySlider.setOrientation(Qt.Horizontal)
+        self.gallerySlider.setRange(0, 0)
+        self.gallerySlider.sliderMoved.connect(self.gallerySetPosition)
+        self.gallerySlider.setObjectName("gallerySlider")
+        self.galleryPlayButton = QPushButton(self.Gallery)
+        self.galleryPlayButton.clicked.connect(self.galleryPlay)
+        self.galleryPlayButton.setEnabled(False)
+        self.galleryPlayButton.setGeometry(QRect(150, 620, 91, 51))
+        self.galleryPlayButton.setStyleSheet("border-radius: 15px;\n"
+"\n"
+"color: rgb(0, 0, 0);\n"
+"background-color: rgb(237, 237, 237);\n"
+"")
+        self.galleryPlayButton.setObjectName("galleryPlayButton")
+        self.openButton = QPushButton(self.Gallery)
+        self.openButton.clicked.connect(self.openFile)
+        self.openButton.setGeometry(QRect(50, 620, 91, 51))
+        self.openButton.setStyleSheet("border-radius: 15px;\n"
+"\n"
+"color: rgb(0, 0, 0);\n"
+"background-color: rgb(237, 237, 237);\n"
+"")
+        self.openButton.setObjectName("openButton")
 
+        self.galleryWidget = QWidget(self.Gallery)
+        self.galleryWidget.setGeometry(QRect(50, 60, 1271, 531))
+        self.galleryWidget.setObjectName("galleryWidget")
+        
+        # Video 
+        gallerVideoWidget = QVideoWidget(self.galleryWidget)
+
+        self.galleryPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+
+        galleryLayout = QHBoxLayout(self.galleryWidget)
+        galleryLayout.setContentsMargins(10, 10, 10, 10)
+        galleryLayout.addWidget(gallerVideoWidget)
+
+        self.galleryWidget.setLayout(galleryLayout)
+
+        self.galleryPlayer.setVideoOutput(gallerVideoWidget)
+
+        self.galleryPlayer.positionChanged.connect(self.galleryPosition)
+        self.galleryPlayer.durationChanged.connect(self.galleryDuration)
+
+        icon3 = QIcon()
+        icon3.addFile(u"gallery.jpg", QSize(), QIcon.Normal, QIcon.On)
+        self.tabWidget.addTab(self.Gallery, icon3, "")
 
         # SETTINGS TAB
         self.Settings = QWidget()
@@ -422,7 +481,7 @@ class Ui_MainWindow(object):
 
         # EXIT BUTTON
         self.btnMainExit = QPushButton(self.widget)
-        self.btnMainExit.setGeometry(QRect(1100, 12, 278, 48))
+        self.btnMainExit.setGeometry(QRect(1160, 12, 220, 48))
         self.btnMainExit.clicked.connect(MainWindow.close)
         self.btnMainExit.setStyleSheet("background-color: rgb(243, 243, 243);")
         icon7 = QIcon()
@@ -462,6 +521,9 @@ class Ui_MainWindow(object):
         self.labelDetection.setText(_translate("MainWindow", "Detection"))
         self.btnCamSave.setText(_translate("MainWindow", "Save"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Camera), _translate("MainWindow", "Camera"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.Gallery), _translate("MainWindow", "Gallery"))
+        self.galleryPlayButton.setText(_translate("MainWindow", "Play / Pause"))
+        self.openButton.setText(_translate("MainWindow", "Open File"))
         self.btnSaveFile.setText(_translate("MainWindow", "Save"))
         self.labelFileLocation.setText(_translate("MainWindow", "File Location"))
         self.btnBrowse.setText(_translate("MainWindow", "Browse"))
@@ -478,6 +540,12 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Help), _translate("MainWindow", "Help"))
         self.btnMainExit.setText(_translate("MainWindow", "Exit"))
 
+    def openFile(self):
+        fileName, _ = QFileDialog.getOpenFileName(None, 'Open Video File', "C:/Users/Dev/Desktop/Thesis/gui/iSecure/recordings", "Image files (*.mp4)")
+ 
+        if fileName != '':
+            self.galleryPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(fileName)))
+            self.galleryPlayButton.setEnabled(True)
 
     def ImageUpdateSlot(self, Image):
         self.labelHome.setPixmap(QPixmap.fromImage(Image))
@@ -562,11 +630,26 @@ class Ui_MainWindow(object):
         self.HomeCamera.start()
         self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
 
+    def galleryPlay(self):
+        if self.galleryPlayer.state() == QMediaPlayer.PlayingState:
+            self.galleryPlayer.pause()
+        else:
+            self.galleryPlayer.play()
+
     def videoTutorial(self):
         if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             self.mediaPlayer.pause()
         else:
             self.mediaPlayer.play()
+
+    def galleryPosition(self, position):
+        self.gallerySlider.setValue(position)
+
+    def galleryDuration(self, duration):
+        self.gallerySlider.setRange(0, duration)
+
+    def gallerySetPosition(self, position):
+        self.galleryPlayer.setPosition(position)
 
     def positionChanged(self, position):
         self.horizontalSlider.setValue(position)
