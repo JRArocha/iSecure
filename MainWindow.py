@@ -30,6 +30,8 @@ for i in range (cur.rowcount):
                 directory = str(row[1])
                 cam = str(row[2])
 
+# rtsp = "rtsp://192.168.86.234/live/ch00_0"
+
 vid = cv2.VideoCapture(int(cam))
 
 # vid = cv2.VideoCapture(0)
@@ -159,7 +161,7 @@ class Ui_MainWindow(object):
         self.label_10.setText("")
         self.label_10.setObjectName("label_10")
         self.label_13 = QLabel(self.widget_3)
-        self.label_13.setGeometry(QRect(210, 430, 121, 31))
+        self.label_13.setGeometry(QRect(205, 430, 121, 31))
         self.label_13.setStyleSheet("color: rgb(255, 255, 255);\n"
 "font-size: 25px;")
         self.label_13.setObjectName("label_13")
@@ -223,6 +225,22 @@ class Ui_MainWindow(object):
         self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
         self.btnCamSave.setObjectName("btnCamSave")
+        self.rtspLink = QLineEdit(self.widget_3)
+        self.rtspLink.setObjectName("rtspLink")
+        self.rtspLink.setGeometry(QRect(40, 490, 431, 41))
+        self.rtspLink.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+"color: rgb(0, 0, 0);\n"
+"font-size: 18px")
+        self.rtspStart = QPushButton(self.widget_3)
+        self.rtspStart.setObjectName("rtspStart")
+        self.rtspStart.setGeometry(QRect(150, 560, 101, 31))
+        self.rtspStart.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+"font-size: 18px")
+        self.rtspStop = QPushButton(self.widget_3)
+        self.rtspStop.setObjectName("rtspStop")
+        self.rtspStop.setGeometry(QRect(260, 560, 101, 31))
+        self.rtspStop.setStyleSheet("background-color: rgb(247, 247, 247);\n"
+"font-size: 18px")
         self.btnCamSave.raise_()
         self.apiKey.raise_()
         self.labelBoundingBox.raise_()
@@ -237,6 +255,9 @@ class Ui_MainWindow(object):
         self.selectCamera.raise_()
         self.label_10.raise_()
         self.label_13.raise_()
+        self.rtspLink.raise_()
+        self.rtspStart.raise_()
+        self.rtspStop.raise_()
         icon2 = QIcon()
         icon2.addPixmap(QPixmap("camera.jpg"), QIcon.Normal, QIcon.On)
         self.tabWidget.addTab(self.Camera, icon2, "")
@@ -510,7 +531,9 @@ class Ui_MainWindow(object):
         self.btnStop.setText(_translate("MainWindow", "Stop"))
         self.selectCamera.setCurrentText(_translate("MainWindow", "Select Camera"))
         self.selectCamera.setItemText(0, _translate("MainWindow", "Camera 1"))
-        self.label_13.setText(_translate("MainWindow", "Counter"))
+        self.label_13.setText(_translate("MainWindow", "RTSP Link"))
+        self.rtspStart.setText(_translate("MainWindow", "Start"))
+        self.rtspStop.setText(_translate("MainWindow", "Stop"))
         self.comboBBox.setItemText(0, _translate("MainWindow", "Off"))
         self.comboBBox.setItemText(1, _translate("MainWindow", "On"))
         self.labelAPI.setText(_translate("MainWindow", "API Key"))
@@ -714,7 +737,7 @@ class Ui_MainWindow(object):
         text.setWindowTitle(title)
         text.setText(message)
         text.setStandardButtons(QMessageBox.Ok)
-        text.exec_()
+        text.exec()
 
 
 
