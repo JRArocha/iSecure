@@ -547,18 +547,22 @@ class Ui_MainWindow(object):
         cur = con.cursor()
         sql = "UPDATE logindb SET Camera = '"+str(self.selectCamera.currentData())+"'"
         if self.selectCamera.currentData() == 0:
-            self.alert("Alert", "Camera updated")
             cur.execute(sql)
             con.commit()
             cur.close()
             con.close()
+            if self.selectCamera.currentData() != int(cam):
+                self.alert("Alert", "Camera Changed... Restart the system...")
+                MainWindow.close()
 
         elif self.selectCamera.currentData() == 1:
-            self.alert("Alert", "Camera updated")
             cur.execute(sql)
             con.commit()
             cur.close()
             con.close()
+            if self.selectCamera.currentData() != int(cam):
+                self.alert("Alert", "Camera Changed... Restart the system...")
+                MainWindow.close()
 
         self.selectCamera.setEnabled(False)
         self.btnStart.setEnabled(False)
