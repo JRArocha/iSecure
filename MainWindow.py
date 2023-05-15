@@ -62,7 +62,6 @@ class Ui_MainWindow(object):
         icon.addPixmap(QPixmap(":/image/logo.jpg"), QIcon.Normal, QIcon.Off)
         MainWindow.setWindowIcon(icon)
         MainWindow.setWindowFlags(Qt.FramelessWindowHint)
-        MainWindow.setAttribute(Qt.WA_TranslucentBackground)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.widget = QWidget(self.centralwidget)
@@ -459,9 +458,16 @@ class Ui_MainWindow(object):
         
         # Video 
         videoWidget = QVideoWidget(self.tutorialWidget)
-        
+
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
+
+        Layout = QHBoxLayout(self.tutorialWidget)
+        Layout.setContentsMargins(10, 10, 10, 10)
+        Layout.addWidget(videoWidget)
+
+        self.tutorialWidget.setLayout(Layout)
+
         self.mediaPlayer.setVideoOutput(videoWidget)
 
         self.mediaPlayer.positionChanged.connect(self.positionChanged)
