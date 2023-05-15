@@ -20,7 +20,7 @@ import pymysql
 # Load Data from Database
 con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
 cur = con.cursor()
-cur.execute("SELECT API, Directory, Camera FROM logindb")
+cur.execute("SELECT API, Directory, Camera, RTSP FROM logindb")
 
 for i in range (cur.rowcount):
         data = cur.fetchall()
@@ -29,7 +29,9 @@ for i in range (cur.rowcount):
                 api = str(row[0])
                 directory = str(row[1])
                 cam = str(row[2])
+                rtspCam = str(row[3])
 
+print(rtspCam)
 # rtsp = "rtsp://192.168.86.234/live/ch00_0"
 
 vid = cv2.VideoCapture(int(cam))
@@ -220,6 +222,7 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.label_9.raise_()
         self.btnCamSave = QPushButton(self.widget_2)
+        self.btnCamSave.setEnabled(False)
         self.btnCamSave.clicked.connect(self.buttonCameraSave)
         self.btnCamSave.setGeometry(QRect(210, 260, 101, 31))
         self.btnCamSave.setStyleSheet("background-color: rgb(247, 247, 247);\n"
@@ -232,11 +235,15 @@ class Ui_MainWindow(object):
 "color: rgb(0, 0, 0);\n"
 "font-size: 18px")
         self.rtspStart = QPushButton(self.widget_3)
+        self.rtspStart.clicked.connect(self.rtspCamStart)
         self.rtspStart.setObjectName("rtspStart")
+        self.rtspStart.setEnabled(True)
         self.rtspStart.setGeometry(QRect(150, 560, 101, 31))
         self.rtspStart.setStyleSheet("background-color: rgb(247, 247, 247);\n"
 "font-size: 18px")
         self.rtspStop = QPushButton(self.widget_3)
+        self.rtspStop.clicked.connect(self.rtspCamStop)
+        self.rtspStop.setEnabled(False)
         self.rtspStop.setObjectName("rtspStop")
         self.rtspStop.setGeometry(QRect(260, 560, 101, 31))
         self.rtspStop.setStyleSheet("background-color: rgb(247, 247, 247);\n"
@@ -571,6 +578,46 @@ class Ui_MainWindow(object):
         self.labelHome.setPixmap(QPixmap.fromImage(Image))
         self.labelHome.setScaledContents(True)
         
+    def rtspCamStart(self):
+        rtsp = self.rtspLink.text()
+        con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+        cur = con.cursor()
+        sql = "UPDATE logindb SET RTSP = '"+rtsp+"'"
+
+        if rtsp != "":
+           cur.execute(sql)
+           con.commit()
+           cur.close()
+           con.close()
+           self.btnStart.setEnabled(False)
+           self.rtspStart.setEnabled(False)
+           self.rtspLink.setEnabled(False)
+           self.selectCamera.setEnabled(False)
+           self.rtspStop.setEnabled(True)
+           self.apiKey.setEnabled(True)
+           self.comboBBox.setEnabled(True)
+           self.comboDetection.setEnabled(True)
+           self.btnCamSave.setEnabled(True)
+           
+           self.CamStart = HomeCamera()
+           self.CamStart.start()
+           self.CamStart.ImageUpdate.connect(self.startCamera)
+           
+    def rtspCamStop(self):
+        self.rtspStop.setEnabled(False)
+        self.rtspStart.setEnabled(True)
+        self.rtspLink.setEnabled(True)
+        self.selectCamera.setEnabled(True)
+        self.btnStart.setEnabled(True)
+        self.btnCamSave.setEnabled(False)
+        self.comboDetection.setEnabled(False)
+        self.comboBBox.setEnabled(False)
+        self.apiKey.setEnabled(False)
+
+        self.CamStart.stop()
+        self.HomeCamera = HomeCamera()
+        self.HomeCamera.start()
+        self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
 
     def CameraStart(self):
         con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
@@ -603,6 +650,8 @@ class Ui_MainWindow(object):
                 self.alert("Alert", "Camera Changed... Restart the system...")
                 MainWindow.close()
 
+        self.rtspLink.setEnabled(False)
+        self.rtspStart.setEnabled(False)
         self.selectCamera.setEnabled(False)
         self.btnStart.setEnabled(False)
         self.btnStop.setEnabled(True)
@@ -621,6 +670,8 @@ class Ui_MainWindow(object):
         self.labelCameraFeed.setPixmap(QPixmap("camera.jpg"))
         self.labelCameraFeed.setScaledContents(True)
         
+        self.rtspLink.setEnabled(True)
+        self.rtspStart.setEnabled(True)
         self.selectCamera.setEnabled(True)
         self.btnStart.setEnabled(True)
         self.btnStop.setEnabled(False)
@@ -628,7 +679,6 @@ class Ui_MainWindow(object):
         self.comboBBox.setEnabled(False)
         self.apiKey.setEnabled(False)
         self.CamStart.stop()
-
         self.HomeCamera = HomeCamera()
         self.HomeCamera.start()
         self.HomeCamera.ImageUpdate.connect(self.ImageUpdateSlot)
