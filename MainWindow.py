@@ -33,7 +33,7 @@ for i in range (cur.rowcount):
 
 
 # rtsp = "rtsp://192.168.86.234/live/ch00_0"
-if int(cam) == 2:
+if int(cam) == 3:
     vid = cv2.VideoCapture(rtspCam)
 else:
     vid = cv2.VideoCapture(int(cam))
@@ -88,7 +88,7 @@ class Ui_MainWindow(object):
 
 
         # HOME TAB
-        if int(cam) <=1:
+        if int(cam) <=2:
             # Home Camera Start
             self.HomeCamera = HomeCamera()
             self.HomeCamera.start()
@@ -148,7 +148,8 @@ class Ui_MainWindow(object):
         self.selectCamera = QComboBox(self.widget_3)
         self.selectCamera.addItem("Camera 1", 0)
         self.selectCamera.addItem("Camera 2", 1)
-        self.selectCamera.addItem("IP Camera", 2)
+        self.selectCamera.addItem("Camera 3", 2)
+        self.selectCamera.addItem("IP Camera", 3)
         self.selectCamera.setCurrentIndex(int(cam))
         self.selectCamera.setEnabled(True)
         self.selectCamera.setObjectName(u"selectCamera")
@@ -460,7 +461,7 @@ class Ui_MainWindow(object):
         videoWidget = QVideoWidget(self.tutorialWidget)
 
         self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Dangerously.mp4"))) 
+        self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("Tutorial.mp4"))) 
 
         Layout = QHBoxLayout(self.tutorialWidget)
         Layout.setContentsMargins(10, 10, 10, 10)
@@ -588,6 +589,15 @@ class Ui_MainWindow(object):
                 MainWindow.close()
 
         elif self.selectCamera.currentData() == 2:
+            cur.execute(sql)
+            con.commit()
+            cur.close()
+            con.close()
+            if self.selectCamera.currentData() != int(cam):
+                self.alert("Alert", "Camera Changed... Restart the system...")
+                MainWindow.close()
+
+        elif self.selectCamera.currentData() == 3:
             cur.execute(sql)
             con.commit()
             cur.close()

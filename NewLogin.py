@@ -58,6 +58,7 @@ class Ui_Form(object):
 "border-bottom: 2px solid rgba(255,255,255,200);\n"
 "color: rgba(255,255,255,240);\n"
 "padding-bottom: 7px;\n"
+"font-size: 18px;\n"
 "text-color: white;")
         self.lineEdit.setObjectName("lineEdit")
         self.lineEdit_2 = QLineEdit(self.widget)
@@ -68,6 +69,7 @@ class Ui_Form(object):
 "border-bottom: 2px solid rgba(255,255,255,200);\n"
 "color: rgba(255,255,255,240);\n"
 "padding-bottom: 7px;\n"
+"font-size: 18px;\n"
 "text-color: white;")
         self.lineEdit_2.setObjectName("lineEdit_2")
         self.pushButton = QPushButton(self.widget, clicked = lambda: self.login())
