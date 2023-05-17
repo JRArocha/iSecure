@@ -34,8 +34,10 @@ for i in range (cur.rowcount):
 
 # rtsp = "rtsp://192.168.86.234/live/ch00_0"
 if int(cam) == 3:
+    print(rtspCam)
     vid = cv2.VideoCapture(rtspCam)
 else:
+    print(int(cam))
     vid = cv2.VideoCapture(int(cam))
 
 # vid = cv2.VideoCapture(0)
@@ -618,6 +620,9 @@ class Ui_MainWindow(object):
         self.CamStart = HomeCamera()
         self.CamStart.start()
         self.CamStart.ImageUpdate.connect(self.startCamera)
+
+        if self.selectCamera.currentData() == 3:
+            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
         
     def startCamera(self, Image):
         self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
@@ -722,13 +727,14 @@ class Ui_MainWindow(object):
         con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
         cur = con.cursor()
         sql = "UPDATE logindb SET Directory = '"+dir+"'"
-        self.alert("Alert", "Directory changed")
+        self.alert("Alert", "Directory changed... Restarting the System...")
         cur.execute(sql)
         con.commit()
         cur.close()
         con.close()
         self.btnSaveFile.setEnabled(False)
         self.lineLocation.setEnabled(False)
+        MainWindow.close()
 
     def buttonSaveSecurity(self):
         username = self.lineOldUname.text()
