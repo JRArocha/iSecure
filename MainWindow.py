@@ -32,7 +32,6 @@ for i in range (cur.rowcount):
                 rtspCam = str(row[3])
 
 
-# rtsp = "rtsp://192.168.86.234/live/ch00_0"
 if int(cam) == 3:
     print(rtspCam)
     vid = cv2.VideoCapture(rtspCam)
@@ -40,7 +39,6 @@ else:
     print(int(cam))
     vid = cv2.VideoCapture(int(cam))
 
-# vid = cv2.VideoCapture(0)
 
 frame_queue = queue.Queue()
 
@@ -49,8 +47,6 @@ video_name = None
 
 # Opencv DNN
 net = cv2.dnn.readNet("dnn_model/yolov4-tiny.weights", "dnn_model/yolov4-tiny.cfg")
-# net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-# net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 model = cv2.dnn_DetectionModel(net)
 model.setInputParams(size=(320, 320), scale=1/255)
 
@@ -300,7 +296,7 @@ class Ui_MainWindow(object):
 "\n"
 "color: rgb(0, 0, 0);\n"
 "background-color: rgb(237, 237, 237);\n"
-"")
+"") 
         self.openButton.setObjectName("openButton")
 
         self.galleryWidget = QWidget(self.Gallery)
@@ -520,8 +516,8 @@ class Ui_MainWindow(object):
         self.labelAPI.setText(_translate("MainWindow", "API Key"))
         self.comboDetection.setItemText(0, _translate("MainWindow", "Off"))
         self.comboDetection.setItemText(1, _translate("MainWindow", "On"))
-        self.labelBoundingBox.setText(_translate("MainWindow", "Bounding Box"))
-        self.labelDetection.setText(_translate("MainWindow", "Detection"))
+        self.labelBoundingBox.setText(_translate("MainWindow", "Detection"))
+        self.labelDetection.setText(_translate("MainWindow", "Notification"))
         self.btnCamSave.setText(_translate("MainWindow", "Save"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Camera), _translate("MainWindow", "Camera"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Gallery), _translate("MainWindow", "Gallery"))
@@ -612,6 +608,7 @@ class Ui_MainWindow(object):
         self.rtspSave.setEnabled(False)
         self.selectCamera.setEnabled(False)
         self.btnStart.setEnabled(False)
+        
         self.btnStop.setEnabled(True)
         self.comboDetection.setEnabled(True)
         self.comboBBox.setEnabled(True)
@@ -621,8 +618,6 @@ class Ui_MainWindow(object):
         self.CamStart.start()
         self.CamStart.ImageUpdate.connect(self.startCamera)
 
-        if self.selectCamera.currentData() == 3:
-            self.CamStart.ImageUpdate.connect(self.ImageUpdateSlot)
         
     def startCamera(self, Image):
         self.labelCameraFeed.setPixmap(QPixmap.fromImage(Image))
@@ -686,7 +681,10 @@ class Ui_MainWindow(object):
            con.commit()
            cur.close()
            con.close()
+           self.alert("Alert", "API Key was changed... Restarting the System...")
+           MainWindow.close()
 
+           
         elif self.comboBBox.currentData() == 0 and self.comboDetection.currentData() == 0:
            self.CamStart.stop()
            self.CamStart = HomeCamera()
@@ -789,8 +787,6 @@ class HomeCamera(QThread):
 class Detection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
-        # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
-        # API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
         API_KEY = str(api)
 
         pb = PushBullet(API_KEY)
@@ -816,7 +812,7 @@ class Detection(QThread):
                     with open(snapshot_path, "rb") as pic:
                         file_data = pb.upload_file(pic, f"snapshot-{detect_time}.jpg")
                         push = pb.push_file(**file_data)
-                        print("Notification sent to user")
+                        print("Snapshot sent to user")
 
                 # sleep for a short time before checking again
                 time.sleep(0.1)
@@ -953,8 +949,6 @@ class BoundingBox(QThread):
 class BoxedDetection(QThread):
     ImageUpdate = pyqtSignal(QImage)
     def run(self):
-        # API_KEY = "o.NgkjKngSaV9sBaxAZPHo2W00pIg0jqrf"   # CJ API
-        # API_KEY = "o.1HTwzyZJCaj4XtW8EOLIGJI9MINcugIF"   # CHIE API
         API_KEY = str(api)
 
         pb = PushBullet(API_KEY)
@@ -1048,9 +1042,9 @@ class BoxedDetection(QThread):
                                 rec.release()
                                 print('Stop Recording!')
                                 #Send video to user
-                                with open(f"{directory+'/'}{current_time}.mp4", "rb") as video:
-                                    file_data = pb.upload_file(video, f"{current_time}.mp4")
-                                push = pb.push_file(**file_data)
+                                # with open(f"{directory+'/'}{current_time}.mp4", "rb") as video:
+                                #     file_data = pb.upload_file(video, f"{current_time}.mp4")
+                                # push = pb.push_file(**file_data)
                                 
                         else:
                             timer_started = True

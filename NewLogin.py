@@ -5,6 +5,22 @@ from MainWindow import Ui_MainWindow
 import sys, res
 from time import sleep
 import pymysql
+from pushbullet import PushBullet
+
+# Load Data from Database
+con = pymysql.connect(host="localhost",user="root",password="",db="isecure")
+cur = con.cursor()
+cur.execute("SELECT API ,Username, Password FROM logindb")
+
+for i in range (cur.rowcount):
+        data = cur.fetchall()
+
+        for row in data:
+                API_KEY = str(row[0])
+                uname = str(row[1])
+                pword = str(row[2])
+
+text = ("Username: " + uname + "\nPassword: " + pword)
 
 class Ui_Form(object):
     def openWindow(self):
@@ -131,7 +147,7 @@ class Ui_Form(object):
         self.retranslateUi(Form)
         QMetaObject.connectSlotsByName(Form)
 
-        self.counter = 3
+        self.counter = 2
         
     def login(self):
         username = self.lineEdit.text()
@@ -140,20 +156,26 @@ class Ui_Form(object):
         cur = con.cursor()
         query = "SELECT * FROM logindb WHERE username = %s AND password = %s"
         data = cur.execute(query,(username,password))
-        if (len(cur.fetchall())>0):
+        if (len(cur.fetchall())==0):
+                if self.counter == 0:
+                     pb = PushBullet(API_KEY)
+                     push = pb.push_note('Login Credentials', text)
+                     print("Credentials sent")
+                     sys.exit()
+
+                else:
+                     self.counter -= 1
+                     count = self.counter + 1
+                     self.warning("Alert", f"Attempts remaining {count}")
+                
+        else:   
                 Form.close()
                 self.window = QMainWindow()
                 self.ui = Ui_MainWindow()
                 self.ui.setupUi(self.window)
                 self.window.show()
                 
-        else:   
-                if self.counter == 0:
-                     sys.exit()
-
-                else:
-                     self.warning("Alert", f"Attempts remaining {self.counter}")
-                     self.counter -= 1
+                     
                      
     def warning(self, title, message):
         text = QMessageBox()
