@@ -17,5 +17,5 @@ mydb1 = mysql.connector.connect(
 )
 
 mycursor1 = mydb1.cursor()
-mycursor1.execute("CREATE TABLE logindb1 (ID INT(11), Username TEXT, Password TEXT, API TEXT, Directory TEXT, Camera TEXT, RTSP TEXT)")
+mycursor1.execute("CREATE TABLE logindb (ID INT(11), Username TEXT, Password TEXT, API TEXT, Directory TEXT, Camera TEXT, RTSP TEXT)")
 mycursor1.execute("SHOW TABLES")
